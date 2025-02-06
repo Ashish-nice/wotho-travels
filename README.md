@@ -1,2 +1,2 @@
-# blue-bus
+# Wotho-Travels
 A bus booking system 
