@@ -21,9 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
+# SECRET_KEY=None
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG',cast = bool,default = False)
 
 ALLOWED_HOSTS = []
 
@@ -31,6 +32,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "bus_booking.apps.BusBookingConfig",
+    "users.apps.UsersConfig",
+    "crispy_forms",
+    "crispy_bootstrap4",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -38,6 +43,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4' 
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -49,7 +57,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "bus_booking.urls"
+ROOT_URLCONF = "server.urls"
 
 TEMPLATES = [
     {
@@ -67,7 +75,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "bus_booking.wsgi.application"
+WSGI_APPLICATION = "server.wsgi.application"
 
 
 # Database
@@ -75,8 +83,12 @@ WSGI_APPLICATION = "bus_booking.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "busdj",
+        "USER": config('DATABASE_USER'),
+        "PASSWORD": config('DATABASE_PASSWORD'),
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
     }
 }
 

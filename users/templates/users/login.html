@@ -1,0 +1,79 @@
+{% extends 'bus_booking/base.html' %}
+{% block title %}Login Page{% endblock %}
+{% load crispy_forms_tags %}
+{% block nav %}{% endblock %} <!-- This line overwrites the nav-bar -->
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-xl border border-gray-200">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-6">Welcome Back</h2>
+        </div>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div class="rounded-md space-y-4">
+                <style>
+                    .form-control {
+                        width: 100%;
+                        padding: 0.75rem 1rem;
+                        border-width: 2px;
+                        border-color: rgb(156, 163, 175);  /* Changed from rgb(209, 213, 219) */
+                        background-color: rgb(249, 250, 251);
+                        border-radius: 0.5rem;
+                        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+                        transition: all 0.2s ease;
+                    }
+                    
+                    .form-control:hover {
+                        transform: scale(1.01);
+                        border-color: rgb(107, 114, 128);  /* Changed from rgb(156, 163, 175) */
+                        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    }
+                    
+                    .form-control:focus {
+                        border-color: rgb(99, 102, 241);
+                        background-color: white;
+                        outline: none;
+                        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+                    }
+                    
+                    label {
+                        display: block;
+                        font-size: 0.875rem;
+                        font-weight: 500;
+                        color: rgb(55, 65, 81);
+                        margin-bottom: 0.5rem;
+                    }
+                    
+                    .help-text {
+                        font-size: 0.75rem;
+                        color: rgba(107, 114, 128, 0.7); /* Translucent color */
+                    }
+                    
+                    .error {
+                        display: block;
+                        color: rgb(239, 68, 68);
+                        font-size: 0.875rem;
+                        margin-top: 0.25rem;
+                    }
+                    
+                    .is-invalid + .help-text {
+                        display: block;
+                        color: rgb(239, 68, 68);
+                    }
+                </style>
+                {{ form|crispy }}
+            </div>
+            <div class="text-sm text-center mt-6">
+                <p class="text-gray-700">Don't have an account? 
+                    <a href="/user/sign-up" class="font-medium text-indigo-600 hover:text-indigo-800 transition-colors duration-200 underline hover:no-underline">
+                        Create one here
+                    </a>
+                </p>
+            </div>
+            <button type="submit" class="mt-6 w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]">
+                Login
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
