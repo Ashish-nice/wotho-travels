@@ -4,43 +4,71 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>{% block title %}Blue Bus{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>{% block title %}Wotho Travels{% endblock %}</title>
     <style>
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: linear-gradient(135deg, #f8faff 0%, #f1f5ff 100%);
+            font-family: 'Montserrat', sans-serif;
+            background-color: #FFF9F2;
         }
         .gradient-text {
-            background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
+            background: linear-gradient(90deg, #FF3D00 0%, #00A067 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        .btn-primary {
+            background: linear-gradient(135deg, #FF3D00 0%, #FF1744 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 61, 0, 0.3);
+        }
+        .btn-secondary {
+            background: #FFF;
+            border: 2px solid #FF3D00;
+            color: #FF3D00;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #FF3D0010;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body class="min-h-screen">
-    <nav class="bg-white/70 shadow-lg sticky top-0 z-50 backdrop-blur-sm">
+    {% block nav %}
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+            <div class="flex justify-between h-20">
                 <div class="flex space-x-8 items-center">
-                    <a href="/home" class="text-2xl font-bold gradient-text hover:scale-105 transition-all duration-200">Wotho Travels</a>
+                    <a href="/home" class="text-3xl font-bold gradient-text hover:scale-105 transition-all duration-200">
+                        Wotho Travels
+                    </a>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-6">
                     {% if user.is_authenticated %}
-                    <a href="/user/profile" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200">Profile</a>
-                    <form method="POST" action="{% url 'user/logout' %}">
+                    <a href="/user/profile" class="text-gray-800 hover:text-[#FF3D00] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">Profile</a>
+                    <form method="POST" action="{% url 'logout' %}">
                         {% csrf_token %}
-                        <button type="submit" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105">Logout</button>
+                        <button type="submit" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">
+                            Logout
+                        </button>
                     </form>
                     {% else %}
-                    <a href="/user/login" class="bg-white text-gray-700 border border-gray-300 hover:border-blue-500 hover:text-blue-600 px-6 py-2 rounded-full text-sm font-medium transition-all duration-300">Login</a>
-                    <a href="/user/sign-up" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105">Sign Up</a>
+                    <a href="/user/login" class="btn-secondary px-8 py-3 rounded-full text-sm font-medium">
+                        Login
+                    </a>
+                    <a href="/user/sign-up" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">
+                        Sign Up
+                    </a>
                     {% endif %}
                 </div>
             </div>
         </div>
     </nav>
+    {% endblock %}
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {% block content %}
