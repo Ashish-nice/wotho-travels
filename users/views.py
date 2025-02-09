@@ -1,15 +1,14 @@
 from django.shortcuts import render,redirect
-from .forms import SignUpForm
-from django.contrib.auth import logout
+from .forms import SignUpForm, UserUpdateForm
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-
-# Create your views here.
 
 def sign_up(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('home')
     else:
         form = SignUpForm()
@@ -17,5 +16,11 @@ def sign_up(request):
 
 @login_required
 def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        if u_form.is_valid():
+            u_form.save()
+    else:
+        u_form = UserUpdateForm(instance=request.user)
     profile = request.user.profile
-    return render(request,'users/profile.html',{'profile':profile})
+    return render(request,'users/profile.html',{'u_form':u_form,'profile':profile})

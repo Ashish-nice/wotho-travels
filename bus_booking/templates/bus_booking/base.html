@@ -49,7 +49,7 @@
                 </div>
                 <div class="flex items-center space-x-6">
                     {% if user.is_authenticated %}
-                    <a href="/user/profile" class="text-gray-800 hover:text-[#FF3D00] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">Profile</a>
+                    <a href="/profile" class="text-gray-800 hover:text-[#FF3D00] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">Profile</a>
                     <form method="POST" action="{% url 'logout' %}">
                         {% csrf_token %}
                         <button type="submit" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">
@@ -57,10 +57,10 @@
                         </button>
                     </form>
                     {% else %}
-                    <a href="/user/login" class="btn-secondary px-8 py-3 rounded-full text-sm font-medium">
+                    <a href="/login" class="btn-secondary px-8 py-3 rounded-full text-sm font-medium">
                         Login
                     </a>
-                    <a href="/user/sign-up" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">
+                    <a href="/sign-up" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">
                         Sign Up
                     </a>
                     {% endif %}

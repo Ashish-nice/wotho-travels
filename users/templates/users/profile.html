@@ -1,0 +1,97 @@
+{% extends 'bus_booking/base.html' %}
+{% block title %}Profile{% endblock %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<style>
+    .profile-container {
+        max-width: 500px;
+        margin: 3rem auto;
+    }
+    .profile-card {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    .profile-header {
+        background: linear-gradient(135deg, #198754, #146c43);
+        padding: 1.5rem;
+    }
+    .form-control, .form-select {
+        border: 2px solid #dee2e6;
+        padding: 0.75rem;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+    }
+    .input-group-text {
+        border: 2px solid #dee2e6;
+        background-color: #f8f9fa;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #198754;
+        border-color: #198754;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        color: white !important;
+    }
+    .btn-primary:hover {
+        background-color: #146c43;
+        border-color: #146c43;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(25, 135, 84, 0.3);
+    }
+    .card-body {
+        padding: 2rem;
+    }
+    form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .form-group {
+        width: 100%;
+    }
+    .d-grid {
+        width: 100%;
+    }
+    #hint_id_username {
+        display: none;
+    }
+</style>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <h2 class="text-white mb-0 text-center">My Profile</h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ u_form|crispy }}
+                
+                <div class="form-group">
+                    <label class="form-label fw-bold">Wallet Balance</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="text" class="form-control" value="{{ profile.user_wallet }}" readonly>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
