@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <title>{% block title %}Wotho Travels{% endblock %}</title> 
+    </head>
+    <body class="min-h-screen">
+        <h2>Welcome, {{ user.username }}!</h2>
+        <p>Please verify your account by clicking the link below:</p>
+        <a href="{{ domain }}{% url 'activate' uidb64=uid token=token %}">Activate Account</a>
+    </body>
+</html>

@@ -10,8 +10,7 @@ class Bus(models.Model):
     bus_fare = models.IntegerField()
     bus_departure_time = models.DateTimeField()
     bus_duration = models.IntegerField()
-    bus_starting_point = models.CharField(max_length=50)
-    bus_destination = models.CharField(max_length=50)
+    bus_route = models.JSONField()
 
     def __init__(self):
         self.bus_seats_available = self.bus_capacity
