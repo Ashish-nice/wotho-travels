@@ -2,15 +2,29 @@
 {% block title %}Booking Page{% endblock %}
 {% load crispy_forms_tags %}
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bus Booking</title>
-</head>
-<body>
     <h1>Welcome to the Bus Booking Website!</h1>
-</body>
-</html>
+    {% for bus in buses %}
+    <div class="bus-detail-container">
+        <div class="detail-card">
+            <div class="card-header">
+                <h1 class="bus-name">{{ bus.bus_name }}</h1>
+                <small class="bus-route">From: {{ bus.bus_route[0] }}   To: {{ bus.bus_route[-1] }}</small>
+                <small class="bus-departure">Departure Time: {{ bus.bus_departure_time }}</small>
+                <small class="bus-fare">Cost: {{ bus.bus_fare }}</small>
+                {% if bus.seats_available > 0 %}
+                <form method="post" action="{% url 'book_ticket' bus.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="book-btn">
+                        Book Ticket Now
+                    </button>
+                </form>
+                {% else %}
+                <div class="sold-out">
+                    Sorry, this bus is fully booked!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 {% endblock%}

@@ -1,0 +1,156 @@
+{% extends "bus_booking/base.html" %}
+{% block title %}Bus Detail{% endblock %}
+{% block content %}
+<style>
+    .bus-detail-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    .detail-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #FF3D00 0%, #00A067 100%);
+        color: white;
+        padding: 2rem;
+    }
+    .bus-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .bus-number {
+        font-size: 1rem;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    .route-info {
+        background: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1F2937;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .route-arrow {
+        color: #FF3D00;
+        font-size: 1.5rem;
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        padding: 2rem;
+        background: #FFF9F2;
+    }
+    .info-item {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+    }
+    .info-item:hover {
+        transform: translateY(-2px);
+    }
+    .info-label {
+        font-size: 0.875rem;
+        color: #6B7280;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    .info-value {
+        font-size: 1.25rem;
+        color: #1F2937;
+        font-weight: 600;
+    }
+    .booking-section {
+        padding: 2rem;
+        text-align: center;
+        background: white;
+    }
+    .book-btn {
+        background: linear-gradient(135deg, #FF3D00 0%, #FF1744 100%);
+        color: white;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    .book-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 61, 0, 0.3);
+    }
+    .sold-out {
+        background: #EF4444;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+</style>
+
+<div class="bus-detail-container">
+    <div class="detail-card">
+        <div class="card-header">
+            <div class="bus-name">{{ bus.bus_name }}</div>
+            <div class="bus-number">{{ bus.bus_number }}</div>
+        </div>
+
+        <div class="route-info">
+            <span>{{ bus.bus_route[0] }}</span>
+            <span class="route-arrow">→</span>
+            <span>{{ bus.bus_route[-1] }}</span>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Departure Time</span>
+                <span class="info-value">{{ bus.bus_departure_time }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Duration</span>
+                <span class="info-value">{{ bus.bus_duration }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Total Capacity</span>
+                <span class="info-value">{{ bus.bus_capacity }} seats</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Available Seats</span>
+                <span class="info-value">{{ bus.bus_seats_available }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Fare</span>
+                <span class="info-value">₹{{ bus.bus_fare }}</span>
+            </div>
+        </div>
+
+        <div class="booking-section">
+            {% if bus.seats_available > 0 %}
+            <form method="post" action="{% url 'book_ticket' bus.id %}">
+                {% csrf_token %}
+                <button type="submit" class="book-btn">
+                    Book Ticket Now
+                </button>
+            </form>
+            {% else %}
+            <div class="sold-out">
+                Sorry, this bus is fully booked!
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
