@@ -9,7 +9,19 @@ class Bus(models.Model):
     bus_capacity = models.IntegerField()
     bus_seats_available = models.IntegerField(null=True,blank=True)
     bus_fare = models.IntegerField()
-    bus_departure_time = models.DateTimeField()
+    
+    weekly_schedule = ArrayField(models.CharField(max_length=10, choices=[
+            ('Monday', 'Monday'),
+            ('Tuesday', 'Tuesday'),
+            ('Wednesday', 'Wednesday'),
+            ('Thursday', 'Thursday'),
+            ('Friday', 'Friday'),
+            ('Saturday', 'Saturday'),
+            ('Sunday', 'Sunday'),
+        ]),
+        blank=True,
+        null=True,
+        default=list)
     bus_duration = models.IntegerField()
     bus_route = ArrayField(models.CharField(max_length=50),default=list)
     class Meta:
@@ -21,7 +33,7 @@ class Bus(models.Model):
         self.bus_seats_available = self.bus_capacity
         super().save(*args, **kwargs)
     
-class Ticket(models.Model):
+class Booking(models.Model):
     ticket_id = models.AutoField(primary_key=True)
     ticket_user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     ticket_bus = models.ForeignKey(Bus, on_delete=models.CASCADE)

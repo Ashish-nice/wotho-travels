@@ -104,42 +104,42 @@
 <div class="bus-detail-container">
     <div class="detail-card">
         <div class="card-header">
-            <div class="bus-name">{{ bus.bus_name }}</div>
-            <div class="bus-number">{{ bus.bus_number }}</div>
+            <div class="bus-name">{{ object.bus_name }}</div>
+            <div class="bus-number">{{ object.bus_number }}</div>
         </div>
 
         <div class="route-info">
-            <span>{{ bus.bus_route[0] }}</span>
+            <span>{{ object.bus_route.0 }}</span>
             <span class="route-arrow">→</span>
-            <span>{{ bus.bus_route[-1] }}</span>
+            <span>{{ object.bus_route|last }}</span>
         </div>
 
         <div class="info-grid">
             <div class="info-item">
                 <span class="info-label">Departure Time</span>
-                <span class="info-value">{{ bus.bus_departure_time }}</span>
+                <span class="info-value">{{ object.bus_departure_time }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Duration</span>
-                <span class="info-value">{{ bus.bus_duration }}</span>
+                <span class="info-value">{{ object.bus_duration }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Total Capacity</span>
-                <span class="info-value">{{ bus.bus_capacity }} seats</span>
+                <span class="info-value">{{ object.bus_capacity }} seats</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Available Seats</span>
-                <span class="info-value">{{ bus.bus_seats_available }}</span>
+                <span class="info-value">{{ object.bus_seats_available }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Fare</span>
-                <span class="info-value">₹{{ bus.bus_fare }}</span>
+                <span class="info-value">₹{{ object.bus_fare }}</span>
             </div>
         </div>
 
         <div class="booking-section">
-            {% if bus.seats_available > 0 %}
-            <form method="post" action="{% url 'book_ticket' bus.id %}">
+            {% if object.bus_seats_available > 0 %}
+            <form method="post" action="#">
                 {% csrf_token %}
                 <button type="submit" class="book-btn">
                     Book Ticket Now
