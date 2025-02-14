@@ -94,9 +94,7 @@
     <div class="bus-card">
         <div class="card-header">
             <h2 class="bus-name">
-                <a href="{% url 'bus_detail' bus.bus_id %}" class="text-white hover:text-gray-100 transition-colors duration-200">
-                    {{ bus.bus_name }}
-                </a>
+                {{ bus.bus_name }}
             </h2>
             <div class="text-sm opacity-90">{{ bus.bus_number }}</div>
         </div>
@@ -105,9 +103,9 @@
             <div class="info-row">
                 <span class="info-label">Route:</span>
                 <span class="info-value">
-                    {{ bus.bus_route.0 }}
+                    {{ from_city }}
                     <span class="route-arrow">→</span>
-                    {{ bus.bus_route|last }}
+                    {{ to_city }}
                 </span>
             </div>
             
@@ -115,12 +113,6 @@
                 <span class="info-label">Departure:</span>
                 <span class="info-value">{{ bus.bus_departure_time }}</span>
             </div>
-            
-            <div class="info-row">
-                <span class="info-label">Fare:</span>
-                <span class="info-value">₹{{ bus.bus_fare }}</span>
-            </div>
-        </div>
 
         <div class="card-footer">
             {% if bus.bus_seats_available > 0 %}
