@@ -109,21 +109,24 @@
                 </span>
             </div>
             
-            <div class="info-row">
-                <span class="info-label">Departure:</span>
-                <span class="info-value">{{ bus.bus_departure_time }}</span>
-            </div>
-
+            <div class="info-row times-row">
+        <div class="time-block">
+            <span class="time-label">Departure</span>
+            <span class="time-value">{{ bus.schedules.get(city=from_city).departure_time|time:"H:i" }}</span>
+            <span class="time-city">{{ from_city }}</span>
+        </div>
+        <span class="time-arrow">→</span>
+        <div class="time-block">
+            <span class="time-label">Arrival</span>
+            <span class="time-value">{{ bus.schedules.get(city=to_city).arrival_time|time:"H:i" }}</span>
+            <span class="time-city">{{ to_city }}</span>
+        </div>
+        
+    </div>
         <div class="card-footer">
-            {% if bus.bus_seats_available > 0 %}
             <a href="{% url 'bus_detail' bus.bus_id %}" class="book-btn inline-block text-center">
                 View Details
             </a>
-            {% else %}
-            <div class="sold-out">
-                Fully Booked
-            </div>
-            {% endif %}
         </div>
     </div>
     {% endfor %}

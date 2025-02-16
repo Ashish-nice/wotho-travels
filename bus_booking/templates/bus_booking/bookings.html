@@ -1,0 +1,215 @@
+{% extends "bus_booking/base.html" %}
+{% block content %}
+<style>
+    .page-title {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    .bookings-section {
+        padding: 2rem;
+    }
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        color: #1F2937;
+        position: relative;
+        padding-left: 1rem;
+    }
+    .section-title::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: linear-gradient(135deg, #FF3D00 0%, #00A067 100%);
+        border-radius: 2px;
+    }
+    .bookings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-bottom: 4rem;
+    }
+    .booking-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease;
+    }
+    .booking-card:hover {
+        transform: translateY(-5px);
+    }
+    .booking-header {
+        background: linear-gradient(135deg, #FF3D00 0%, #00A067 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    .bus-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .booking-info {
+        padding: 1.5rem;
+    }
+    .info-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.8rem;
+        gap: 0.5rem;
+    }
+    .info-label {
+        color: #6B7280;
+        font-size: 0.9rem;
+        font-weight: 500;
+        width: 100px;
+    }
+    .info-value {
+        color: #1F2937;
+        font-weight: 600;
+    }
+    .booking-footer {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e5e7eb;
+    }
+    .cancel-btn {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 0.8rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .cancel-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 0.3rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .status-active { background: #10B981; color: white; }
+    .status-cancelled { background: #EF4444; color: white; }
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6B7280;
+        font-size: 1.1rem;
+    }
+</style>
+
+<div class="page-title">
+    <h1 class="text-4xl font-bold gradient-text">My Bookings</h1>
+</div>
+
+<div class="bookings-section">
+    <h2 class="section-title">Upcoming Journeys</h2>
+    {% if upcoming_bookings %}
+    <div class="bookings-grid">
+        {% for booking in upcoming_bookings %}
+        <div class="booking-card">
+            <div class="booking-header">
+                <h3 class="bus-name">{{ booking.ticket_bus.bus_name }}</h3>
+                <div class="status-badge {% if booking.ticket_status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
+                    {{ booking.ticket_status }}
+                </div>
+            </div>
+            
+            <div class="booking-info">
+                <div class="info-row">
+                    <span class="info-label">From:</span>
+                    <span class="info-value">{{ booking.from_city }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">To:</span>
+                    <span class="info-value">{{ booking.to_city }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span class="info-value">{{ booking.ticket_time|date:"F d, Y" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Time:</span>
+                    <span class="info-value">{{ booking.ticket_time|time:"H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Seats:</span>
+                    <span class="info-value">{{ booking.ticket_seats }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fare:</span>
+                    <span class="info-value">₹{{ booking.fare }}</span>
+                </div>
+            </div>
+
+            {% if booking.ticket_status != 'Cancelled' %}
+            <div class="booking-footer">
+                <form method="POST" action="{% url 'cancel_booking' booking.ticket_id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="cancel-btn">Cancel Booking</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No upcoming bookings</div>
+    {% endif %}
+
+    <h2 class="section-title">Past Journeys</h2>
+    {% if past_bookings %}
+    <div class="bookings-grid">
+        {% for booking in past_bookings %}
+        <div class="booking-card">
+            <div class="booking-header">
+                <h3 class="bus-name">{{ booking.ticket_bus.bus_name }}</h3>
+                <div class="status-badge {% if booking.ticket_status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
+                    {{ booking.ticket_status }}
+                </div>
+            </div>
+            
+            <div class="booking-info">
+                <div class="info-row">
+                    <span class="info-label">From:</span>
+                    <span class="info-value">{{ booking.from_city }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">To:</span>
+                    <span class="info-value">{{ booking.to_city }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span class="info-value">{{ booking.ticket_time|date:"F d, Y" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Time:</span>
+                    <span class="info-value">{{ booking.ticket_time|time:"H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Seats:</span>
+                    <span class="info-value">{{ booking.ticket_seats }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fare:</span>
+                    <span class="info-value">₹{{ booking.fare }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No past journeys</div>
+    {% endif %}
+</div>
+{% endblock content %}

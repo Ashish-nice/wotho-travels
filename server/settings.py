@@ -30,7 +30,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-SITE_ID = 2
+SITE_ID = 1
 
 INSTALLED_APPS = [
     "bus_booking.apps.BusBookingConfig",
@@ -153,8 +153,8 @@ AUTHENTICATION_BACKENDS = (
     "allauth.account.auth_backends.AuthenticationBackend",
 )
 SOCIALACCOUNT_LOGIN_ON_GET = True
-LOGIN_REDIRECT_URL = '/home/'
-SOCIALACCOUNT_LOGIN_REDIRECT_URL='/home/'
+LOGIN_REDIRECT_URL = '/main/'
+SOCIALACCOUNT_LOGIN_REDIRECT_URL='/main/'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_LOGIN_METHODS = {'email'}

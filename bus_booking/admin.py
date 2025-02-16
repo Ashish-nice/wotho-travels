@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bus, Booking
+from .models import Bus, Booking,BusFare,RunningSchedule
 # Register your models here.
 @admin.register(Bus)
 class BusAdmin(admin.ModelAdmin):
@@ -10,8 +10,7 @@ class BusAdmin(admin.ModelAdmin):
         value = self.cleaned_data['bus_route']
         return value.split(',') if value else []
    
-    def clean_weekly_schedule(self):
-        value = self.cleaned_data['weekly_schedule']
-        return value.split(',') if value else []
 
 admin.site.register(Booking)
+admin.site.register(BusFare)
+admin.site.register(RunningSchedule)

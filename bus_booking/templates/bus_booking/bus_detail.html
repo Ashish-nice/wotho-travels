@@ -121,7 +121,7 @@
             </div>
             <div class="info-item">
                 <span class="info-label">Duration</span>
-                <span class="info-value">{{ object.bus_duration }}</span>
+                <span class="info-value">{{ object.bus_duration }} hours</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Total Capacity</span>
@@ -138,7 +138,7 @@
         </div>
 
         <div class="booking-section">
-            {% if object.bus_seats_available > 0 %}
+            {% if is_available %}
             <form method="post" action="#">
                 {% csrf_token %}
                 <button type="submit" class="book-btn">
