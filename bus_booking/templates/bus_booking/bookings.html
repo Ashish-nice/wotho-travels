@@ -119,9 +119,9 @@
         {% for booking in upcoming_bookings %}
         <div class="booking-card">
             <div class="booking-header">
-                <h3 class="bus-name">{{ booking.ticket_bus.bus_name }}</h3>
-                <div class="status-badge {% if booking.ticket_status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
-                    {{ booking.ticket_status }}
+                <h3 class="bus-name">{{ booking.bus.name }}</h3>
+                <div class="status-badge {% if booking.status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
+                    {{ booking.status }}
                 </div>
             </div>
             
@@ -136,15 +136,15 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Date:</span>
-                    <span class="info-value">{{ booking.ticket_time|date:"F d, Y" }}</span>
+                    <span class="info-value">{{ booking.time|date:"F d, Y" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Time:</span>
-                    <span class="info-value">{{ booking.ticket_time|time:"H:i" }}</span>
+                    <span class="info-value">{{ booking.time|time:"H:i" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Seats:</span>
-                    <span class="info-value">{{ booking.ticket_seats }}</span>
+                    <span class="info-value">{{ booking.seats }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Fare:</span>
@@ -152,9 +152,9 @@
                 </div>
             </div>
 
-            {% if booking.ticket_status != 'Cancelled' %}
+            {% if booking.status != 'Cancelled' %}
             <div class="booking-footer">
-                <form method="POST" action="{% url 'cancel_booking' booking.ticket_id %}">
+                <form method="POST" action="{% url 'cancel_booking' booking.id %}">
                     {% csrf_token %}
                     <button type="submit" class="cancel-btn">Cancel Booking</button>
                 </form>
@@ -173,9 +173,9 @@
         {% for booking in past_bookings %}
         <div class="booking-card">
             <div class="booking-header">
-                <h3 class="bus-name">{{ booking.ticket_bus.bus_name }}</h3>
-                <div class="status-badge {% if booking.ticket_status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
-                    {{ booking.ticket_status }}
+                <h3 class="bus-name">{{ booking.bus.bus_name }}</h3>
+                <div class="status-badge {% if booking.status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
+                    {{ booking.status }}
                 </div>
             </div>
             
@@ -190,15 +190,15 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Date:</span>
-                    <span class="info-value">{{ booking.ticket_time|date:"F d, Y" }}</span>
+                    <span class="info-value">{{ booking.time|date:"F d, Y" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Time:</span>
-                    <span class="info-value">{{ booking.ticket_time|time:"H:i" }}</span>
+                    <span class="info-value">{{ booking.time|time:"H:i" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Seats:</span>
-                    <span class="info-value">{{ booking.ticket_seats }}</span>
+                    <span class="info-value">{{ booking.seats }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Fare:</span>

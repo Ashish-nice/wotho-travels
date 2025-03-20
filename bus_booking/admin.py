@@ -1,16 +1,38 @@
 from django.contrib import admin
-from .models import Bus, Booking,BusFare,RunningSchedule
-# Register your models here.
+#from django.contrib.auth.models import Group
+#from django.contrib.sites.models import Site
+#from allauth.socialaccount import SocialAccount, SocialApp, SocialToken
+from allauth.account.models import EmailAddress
+from .models import Bus, Booking, BusFare, Schedule, City
+#Making my admin page look good
+class ScheduleInline(admin.TabularInline):
+    model = Schedule
+    extra = 1
+    
+class BusFareInline(admin.TabularInline):
+    model = BusFare
+    extra = 1
+
 @admin.register(Bus)
 class BusAdmin(admin.ModelAdmin):
-    list_display = ('bus_name', 'bus_number', 'bus_seats_available')
-    search_fields = ('bus_name', 'bus_number')
+    list_display = ('name', 'number', 'capacity')
+    search_fields = ('name', 'number')
+    inlines = [ScheduleInline, BusFareInline]
 
-    def clean_bus_route(self):
-        value = self.cleaned_data['bus_route']
-        return value.split(',') if value else []
-   
+@admin.register(Booking)
+class BookingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'bus', 'from_city', 'to_city', 'status')
+    list_filter = ('status', 'time')
+    search_fields = ('id', 'user__user__username')
 
-admin.site.register(Booking)
+@admin.register(City)
+class CityAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
 admin.site.register(BusFare)
-admin.site.register(RunningSchedule)
+#admin.site.unregister(Group)
+#admin.site.unregister(Site)
+#admin.site.unregister(SocialAccount)
+#admin.site.unregister(SocialApp)
+#admin.site.unregister(SocialToken)
+#admin.site.unregister(EmailAddress)

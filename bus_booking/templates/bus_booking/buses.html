@@ -94,14 +94,13 @@
     <div class="bus-card">
         <div class="card-header">
             <h2 class="bus-name">
-                {{ bus.bus_name }}
+                {{ bus.name }}
             </h2>
-            <div class="text-sm opacity-90">{{ bus.bus_number }}</div>
+            <div class="text-sm opacity-90">{{ bus.number }}</div>
         </div>
         
         <div class="bus-info">
             <div class="info-row">
-                <span class="info-label">Route:</span>
                 <span class="info-value">
                     {{ from_city }}
                     <span class="route-arrow">→</span>
@@ -110,23 +109,21 @@
             </div>
             
             <div class="info-row times-row">
-        <div class="time-block">
-            <span class="time-label">Departure</span>
-            <span class="time-value">{{ bus.schedules.get(city=from_city).departure_time|time:"H:i" }}</span>
-            <span class="time-city">{{ from_city }}</span>
-        </div>
-        <span class="time-arrow">→</span>
-        <div class="time-block">
-            <span class="time-label">Arrival</span>
-            <span class="time-value">{{ bus.schedules.get(city=to_city).arrival_time|time:"H:i" }}</span>
-            <span class="time-city">{{ to_city }}</span>
-        </div>
-        
-    </div>
-        <div class="card-footer">
-            <a href="{% url 'bus_detail' bus.bus_id %}" class="book-btn inline-block text-center">
-                View Details
-            </a>
+                <div class="time-block">
+                    <span class="time-label">Departure</span>
+                    <span class="time-value"></span>
+                </div>
+                <span class="time-arrow">→</span>
+                <div class="time-block">
+                    <span class="time-label">Arrival</span>
+                    <span class="time-value"></span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'bus_detail' bus.id  %}" class="book-btn inline-block text-center">
+                    View Details
+                </a>
+            </div>
         </div>
     </div>
     {% endfor %}

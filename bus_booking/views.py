@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Bus,Booking,BusFare,RunningSchedule
+from .models import Bus,Booking,BusFare,Schedule
 from django.views.generic import ListView,DetailView
 from datetime import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.db.models import Q
 # Create your views here.
 
 def home(request):
@@ -16,71 +17,47 @@ class BusListView(ListView):
     model = Bus
     template_name = 'bus_booking/buses.html' # <app>/<model>_<viewtype>.html
     context_object_name = 'buses'
-    ordering = ['bus_departure_time']
     length = 0
-    departure_time = []
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.from_city = request.GET.get('from_city')
+        self.to_city = request.GET.get('to_city')
+        self.date = request.GET.get('date')
+
     def get_queryset(self):
         queryset = Bus.objects.all()
-        from_city = self.request.GET.get('from_city')
-        to_city = self.request.GET.get('to_city')
-        date = self.request.GET.get('date')
-        if date:
-            date_obj = datetime.strptime(date,'%Y-%m-%d')
+        if self.date:
+            date_obj = datetime.strptime(self.date,'%Y-%m-%d')
             day = date_obj.strftime('%A')
-            queryset = queryset.filter(weekly_schedule__contains=[day])
-        if from_city and to_city:
-            queryset = queryset.filter(bus_route__contains=[from_city,to_city]).all()
-            queryset = [bus for bus in queryset if bus.bus_route.index(from_city) < bus.bus_route.index(to_city)] 
-            departure_time = [bus.bus_departure_time for bus in queryset]       
+            queryset = queryset.filter(schedule__day=day).all()
+        for bus in queryset:
+            from_stop = bus.schedule_set.get(city=self.from_city).stop_number
+            to_stop = bus.schedule_set.get(city=self.to_city).stop_number
+            if from_stop > to_stop:
+                queryset.exclude(bus_id=bus.bus_id)
         return queryset
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['from_city'] = self.from_city
+        context['to_city'] = self.to_city
+        context['date'] = self.date
+        return context
+
+class BusDetailView(LoginRequiredMixin, DetailView):
+    model = Bus
+    template_name = 'bus_booking/bus_detail.html' # <app>/<model>_<viewtype>.html
+    context_object_name = 'bus'
+    login_url = 'login'  # URL name for your login view
+    redirect_field_name = 'next'
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['from_city'] = self.request.GET.get('from_city')
         context['to_city'] = self.request.GET.get('to_city')
         context['date'] = self.request.GET.get('date')
-        context['departure_time'] = self.departure_time
         return context
-    
-    def get_bus_schedule(bus, from_city, to_city, day):
-        departure = bus.schedules.filter(
-            city=from_city,
-            day=day
-        ).first()
-        
-        arrival = bus.schedules.filter(
-            city=to_city,
-            day=day
-        ).first()
-        
-        return {
-            'departure_time': departure.departure_time if departure else None,
-            'arrival_time': arrival.arrival_time if arrival else None,
-            'day': day
-        }
-
-class BusDetailView(LoginRequiredMixin, DetailView):
-    model = Bus
-    template_name = 'bus_booking/bus_detail.html' # <app>/<model>_<viewtype>.html
-    login_url = 'login'  # URL name for your login view
-    redirect_field_name = 'next'
-    def get_context_data(self, **kwargs):
-        from_city = self.request.GET.get('from_city')
-        to_city = self.request.GET.get('to_city')
-        date = self.request.GET.get('date')
-        context = super().get_context_data(**kwargs)
-        bus = self.get_object()
-        flag=True
-        if from_city and to_city:
-            try:
-                for i in range(bus.bus_route.index(from_city), bus.bus_route.index(to_city)):
-                    if bus.bus_seats_available[i] == 0:
-                        flag = False
-                        break
-            except ValueError:
-                flag = False
-        context['is_available']=flag
-        
 
 class UserBookingsView(LoginRequiredMixin, ListView):
     model = Booking
@@ -128,18 +105,18 @@ def book(request, bus_id):
                 return redirect('bus_detail', pk=bus_id)
             
             # Calculate fare
-            fare = BusFare.get_fare(bus, from_city, to_city, seat_type, conditioning)
+            fare = BusFare.get_or_create(bus, from_city, to_city, seat_type, conditioning)
             
             # Create and save the booking
             booking = Booking(
-                ticket_user=request.user.profile,
-                ticket_bus=bus,
+                user=request.user.profile,
+                bus=bus,
                 from_city=from_city,
                 to_city=to_city,
                 fare=fare,
-                ticket_seats=ticket_seats,
-                ticket_time=ticket_time,
-                ticket_status='BOOKED'
+                seats=ticket_seats,
+                time=ticket_time,
+                status='BOOKED'
             )
             booking.save()
             

@@ -104,36 +104,36 @@
 <div class="bus-detail-container">
     <div class="detail-card">
         <div class="card-header">
-            <div class="bus-name">{{ object.bus_name }}</div>
-            <div class="bus-number">{{ object.bus_number }}</div>
+            <div class="bus-name">{{ bus.name }}</div>
+            <div class="bus-number">{{ bus.number }}</div>
         </div>
 
         <div class="route-info">
-            <span>{{ object.bus_route.0 }}</span>
+            <span>{{ from_city }}</span>
             <span class="route-arrow">→</span>
-            <span>{{ object.bus_route|last }}</span>
+            <span>{{ to_city }}</span>
         </div>
 
         <div class="info-grid">
             <div class="info-item">
                 <span class="info-label">Departure Time</span>
-                <span class="info-value">{{ object.bus_departure_time }}</span>
+                <span class="info-value">{{ bus.schedule.departure_time }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Duration</span>
-                <span class="info-value">{{ object.bus_duration }} hours</span>
+                <span class="info-value">? hours</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Total Capacity</span>
-                <span class="info-value">{{ object.bus_capacity }} seats</span>
+                <span class="info-value">{{ bus.capacity }} seats</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Available Seats</span>
-                <span class="info-value">{{ object.bus_seats_available }}</span>
+                <span class="info-value">{{ bus.seats_available }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Fare</span>
-                <span class="info-value">Starts at ₹{{ object.base_fare }}</span>
+                <span class="info-value">Starts at ₹{{ bus.fare }}</span>
             </div>
         </div>
 
