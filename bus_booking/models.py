@@ -13,7 +13,14 @@ DAYS_OF_WEEK = [
         ('Saturday', 'Saturday'),
         ('Sunday', 'Sunday'),
     ]
-
+SEAT_TYPES = [
+    ('Seater','Seater'),
+    ('Sleeper','Sleeper'),
+    ]
+CONDITIONING = [
+    ('AC','AC'),
+    ('Non-AC','Non-AC'),
+    ]
 
 class City(models.Model):
     name = models.CharField(max_length=50, primary_key=True)
@@ -64,6 +71,12 @@ class Schedule(models.Model):
         if self.seats is None:
             self.seats = self.bus.capacity
         super().save(*args, **kwargs)
+
+class Ticket(models.Model):
+    name = models.CharField(max_length=50)
+    age = models.PositiveIntegerField()
+    seat_type = models.CharField(max_length=8,choices=SEAT_TYPES)
+    conditioning = models.CharField(max_length=12,choices=CONDITIONING)
 
 class Booking(models.Model):
     STATUS = [
