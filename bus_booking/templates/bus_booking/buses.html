@@ -120,7 +120,7 @@
                 </div>
             </div>
             <div class="card-footer">
-                <a href="{% url 'bus_detail' bus.id  %}" class="book-btn inline-block text-center">
+                <a href="{% url 'bus_detail' bus.id %}?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}" class="book-btn inline-block text-center">
                     View Details
                 </a>
             </div>

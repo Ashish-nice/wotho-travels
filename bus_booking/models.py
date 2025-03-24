@@ -29,7 +29,6 @@ class Bus(models.Model):
     name = models.CharField(max_length=50)
     number = models.CharField(max_length=50)
     capacity = models.IntegerField()
-    seats_available = ArrayField(models.IntegerField(),default=list)
     fare = models.IntegerField(null=True,blank=True)
     cities = models.ManyToManyField(City, through='Schedule', related_name="buses")
 
@@ -44,6 +43,7 @@ class Schedule(models.Model):
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
     city = models.ForeignKey(City, on_delete=models.CASCADE)
     day = models.CharField(max_length=10, choices=DAYS_OF_WEEK)
+    seats = models.IntegerField(null=True, blank=True)
     arrival_time = models.TimeField()
     departure_time = models.TimeField()
     stop_number = models.PositiveIntegerField()
@@ -59,52 +59,11 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f"{self.bus.name} - {self.city} ({self.day})"
-
-class BusFare(models.Model):
-    bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name='fares')
-    from_city = models.CharField(max_length=50)
-    to_city = models.CharField(max_length=50)
-    fare = models.DecimalField(max_digits=10, decimal_places=2) 
-    seat_type = models.CharField(max_length=50, choices=[
-        ('General', 'General'),
-        ('Luxury', 'Luxury'),
-        ('Sleeper', 'Sleeper')
-    ])
-    conditioning = models.CharField(max_length=50, choices=[
-        ('AC', 'AC'),
-        ('Non-AC', 'Non-AC')
-    ])
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['bus', 'from_city', 'to_city','seat_type','conditioning'], name='unique_bus_fare')
-        ]
-
-    def __str__(self):
-        return f"{self.bus} {self.from_city} → {self.to_city} fare"
     
     def save(self, *args, **kwargs):
-        if not self.pk:
-            try:
-                start_idx = self.bus.cities.index(self.from_city)
-                end_idx = self.bus.cities.index(self.to_city)
-                segments = abs(end_idx - start_idx)
-                fare = self.base_fare * (segments + 1)
-                multipliers = {
-                    "General": 1.0,
-                    "Luxury": 1.5,
-                    "Sleeper": 2.0
-                }
-                fare *= multipliers.get(self.seat_type, 1.0)
-                # AC premium
-                if self.conditioning == "AC":
-                    fare *= 1.2 
-                return int(fare)
-            except ValueError:
-                raise ValueError("Cities not found in bus route")
+        if self.seats is None:
+            self.seats = self.bus.capacity
         super().save(*args, **kwargs)
-
-
 
 class Booking(models.Model):
     STATUS = [
@@ -116,33 +75,14 @@ class Booking(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
-    from_city = models.CharField(max_length=50, null=True, blank=True)  # Keep nullable
-    to_city = models.CharField(max_length=50, null=True, blank=True)    # Keep nullable
+    from_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="departures")
+    to_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="arrivals")    
     total_fare = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     seats = models.PositiveIntegerField(default=1)
-    time = models.DateTimeField()
+    date_time = models.DateTimeField()
     status = models.CharField(
         max_length=20, 
         choices=STATUS, 
         default='BOOKED'
     )
 
-    def save(self, *args, **kwargs):
-        if self._state.adding:  # If this is a new booking
-            start_idx = self.bus.cities.index(self.from_city)
-            end_idx = self.bus.cities.index(self.to_city)
-            
-            # Check if enough seats are available
-            for i in range(start_idx, end_idx):
-                if self.bus.bus_seats_available[i] < self.seats:
-                    raise ValidationError("Not enough seats available")
-            
-            # Update seats
-            for i in range(start_idx, end_idx):
-                self.bus.bus_seats_available[i] -= self.seats
-            self.bus.save()
-            
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Booking #{self.id} - {self.user.user.username}"

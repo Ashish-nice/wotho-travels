@@ -99,6 +99,81 @@
         font-weight: 600;
         display: inline-block;
     }
+    .booking-dialog {
+        padding: 2rem;
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        width: 90%;
+        max-width: 600px;
+    }
+    
+    .booking-dialog::backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .passenger-entry {
+        background: #f8f9fa;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+    }
+    
+    .passenger-entry input,
+    .passenger-entry select {
+        width: 100%;
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .add-passenger-btn {
+        background: #00A067;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        margin: 1rem 0;
+        cursor: pointer;
+    }
+    
+    .dialog-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .cancel-btn {
+        background: #6B7280;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .confirm-btn {
+        background: #FF3D00;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .remove-btn {
+        float: right;
+        background: #EF4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-weight: bold;
+    }
 </style>
 
 <div class="bus-detail-container">
@@ -109,27 +184,27 @@
         </div>
 
         <div class="route-info">
-            <span>{{ from_city }}</span>
+            <div class="city-time">
+                <p>{{ from_city }}<br>
+                {{ departure_day }}<br>
+                {{ departure_time }}</p>
+            </div>
             <span class="route-arrow">→</span>
-            <span>{{ to_city }}</span>
+            <div class="city-time">
+                <p>{{ to_city }}<br>
+                {{ arrival_day }}<br>
+                {{ arrival_time }}</p>
+            </div>
         </div>
 
         <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">Departure Time</span>
-                <span class="info-value">{{ bus.schedule.departure_time }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Duration</span>
-                <span class="info-value">? hours</span>
-            </div>
             <div class="info-item">
                 <span class="info-label">Total Capacity</span>
                 <span class="info-value">{{ bus.capacity }} seats</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Available Seats</span>
-                <span class="info-value">{{ bus.seats_available }}</span>
+                <span class="info-value">{{ available_seats }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Fare</span>
@@ -138,13 +213,43 @@
         </div>
 
         <div class="booking-section">
-            {% if is_available %}
-            <form method="post" action="#">
-                {% csrf_token %}
-                <button type="submit" class="book-btn">
-                    Book Ticket Now
-                </button>
-            </form>
+            {% if available_seats %}
+            <button onclick="openBookingDialog()" class="book-btn">
+                Book Ticket Now
+            </button>
+            
+            <!-- Booking Dialog -->
+            <dialog id="bookingDialog" class="booking-dialog">
+                <form method="post" action="{% url 'book' id=bus.id %}" id="bookingForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="from_city" value="{{ from_city }}">
+                    <input type="hidden" name="to_city" value="{{ to_city }}">
+                    <input type="hidden" name="ticket_time" value="{{ departure_time }}">
+                    
+                    <div class="passenger-list" id="passengerList">
+                        <div class="passenger-entry">
+                            <h3>Passenger 1</h3>
+                            <input type="text" name="passenger_name[]" placeholder="Passenger Name" required>
+                            <input type="number" name="passenger_age[]" placeholder="Age" required min="1" max="120">
+                            <select name="seat_type[]" required>
+                                <option value="Sleeper">Sleeper</option>
+                                <option value="Seater">Seater</option>
+                            </select>
+                            <select name="conditioning[]" required>
+                                <option value="AC">AC</option>
+                                <option value="Non-AC">Non-AC</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="button" onclick="addPassenger()" class="add-passenger-btn">Add Passenger</button>
+                    
+                    <div class="dialog-buttons">
+                        <button type="button" onclick="closeBookingDialog()" class="cancel-btn">Cancel</button>
+                        <button type="submit" class="confirm-btn">Confirm and Proceed to Payment</button>
+                    </div>
+                </form>
+            </dialog>
             {% else %}
             <div class="sold-out">
                 Sorry, this bus is fully booked!
@@ -153,4 +258,44 @@
         </div>
     </div>
 </div>
+
+<script>
+    const dialog = document.getElementById('bookingDialog');
+    const passengerList = document.getElementById('passengerList');
+    let passengerCount = 1;
+    
+    function openBookingDialog() {
+        dialog.showModal();
+    }
+    
+    function closeBookingDialog() {
+        dialog.close();
+    }
+    
+    function addPassenger() {
+        if (passengerCount >= {{ available_seats }}) {
+            alert('Maximum available seats reached!');
+            return;
+        }
+        
+        passengerCount++;
+        const newPassenger = document.createElement('div');
+        newPassenger.className = 'passenger-entry';
+        newPassenger.innerHTML = `
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); passengerCount--;">×</button>
+            <h3>Passenger ${passengerCount}</h3>
+            <input type="text" name="passenger_name[]" placeholder="Passenger Name" required>
+            <input type="number" name="passenger_age[]" placeholder="Age" required min="1" max="120">
+            <select name="seat_type[]" required>
+                <option value="Sleeper">Sleeper</option>
+                <option value="Seater">Seater</option>
+            </select>
+            <select name="conditioning[]" required>
+                <option value="AC">AC</option>
+                <option value="Non-AC">Non-AC</option>
+            </select>
+        `;
+        passengerList.appendChild(newPassenger);
+    }
+</script>
 {% endblock %}
