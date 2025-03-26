@@ -10,6 +10,6 @@
     <body class="min-h-screen">
         <h2>Welcome, {{ user.username }}!</h2>
         <p>Please verify your account by clicking the link below:</p>
-        <a href="{{ domain }}{% url 'activate' uidb64=uid token=token %}">Activate Account</a>
+        <a href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}">Activate Account</a>
     </body>
 </html>

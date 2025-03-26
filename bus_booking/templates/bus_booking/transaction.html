@@ -1,0 +1,164 @@
+{% extends 'bus_booking/base.html' %}
+{% block nav %}{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4">
+                <h2 class="text-2xl font-bold text-white">Complete Your Transaction</h2>
+            </div>
+            
+            <div class="p-6">
+                <form id="transactionForm" method="post" action="{% url 'verify_otp' %}" class="space-y-8">
+                    {% csrf_token %}
+                    
+                    <!-- Fare Summary -->
+                    <div class="space-y-3">
+                        <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Payment Details
+                        </h3>
+                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-5">
+                            <div class="grid grid-cols-2 gap-2 text-gray-700">
+                                <div>Base Fare</div>
+                                <div class="text-right font-medium" id="baseFare">₹{{ base_fare|floatformat:2 }}</div>
+                                
+                                <div>Taxes & Fees</div>
+                                <div class="text-right font-medium" id="taxes">₹{{ taxes|floatformat:2 }}</div>
+                                
+                                <div class="h-px bg-gray-200 col-span-2 my-2"></div>
+                                
+                                <div class="font-bold text-gray-900">Total Amount</div>
+                                <div class="text-right font-bold text-gray-900" id="totalFare">₹{{ total_fare|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OTP Verification -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            OTP Verification
+                        </h3>
+                        <div class="bg-blue-50 text-blue-700 px-4 py-3 rounded-lg border border-blue-200">
+                            <p>An OTP has been sent to your email <span class="font-semibold">{{ email }}</span></p>
+                        </div>
+                        
+                        <div>
+                            <label for="otp" class="block text-sm font-medium text-gray-700 mb-1">Enter OTP Code</label>
+                            <input type="text" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-center text-xl tracking-widest" 
+                                   id="otp" name="otp" maxlength="6" required placeholder="Enter 6-digit OTP">
+                        </div>
+                        
+                        <div id="otpTimer" class="text-sm text-gray-600">
+                            Time remaining: <span id="timer" class="font-medium text-blue-600">5:00</span>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row justify-between gap-4 pt-2">
+                            <button type="button" id="resendOtp" disabled
+                                    class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Resend OTP
+                            </button>
+                            <button type="submit" id="verifyOtpBtn" 
+                                    class="flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Verify OTP & Complete Payment
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if messages %}
+                    <div class="mt-3">
+                        {% for message in messages %}
+                        <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Start timer when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        startTimer();
+        
+        {% if otp %}
+        // This is just for demo purposes, in production you would not expose the OTP in the HTML
+        console.log("OTP for testing: {{ otp }}");
+        {% endif %}
+    });
+
+    function startTimer() {
+        let timeLeft = 300;
+        const timerDisplay = document.getElementById('timer');
+        const resendOtpBtn = document.getElementById('resendOtp');
+        
+        // Reset resend button state
+        resendOtpBtn.disabled = true;
+        resendOtpBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        const timer = setInterval(function() {
+            const minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            
+            timerDisplay.textContent = `${minutes}:${seconds}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                // Enable resend button
+                resendOtpBtn.disabled = false;
+                resendOtpBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            timeLeft--;
+        }, 1000);
+    }
+    
+    // Add event listener for resend OTP button
+    document.getElementById('resendOtp').addEventListener('click', function() {
+        if (!this.disabled) {
+            fetch('{% url "resend_otp" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reset and restart the timer
+                    startTimer();
+                    alert(data.message);
+                    
+                    // For testing only
+                    if (data.otp) {
+                        console.log("New OTP for testing: " + data.otp);
+                    }
+                } else {
+                    alert('Failed to resend OTP. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -204,7 +204,7 @@
             </div>
             <div class="info-item">
                 <span class="info-label">Available Seats</span>
-                <span class="info-value">{{ available_seats }}</span>
+                <span class="info-value">{{ available_seats }} seats</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Fare</span>
@@ -223,6 +223,7 @@
                 <form method="post" action="{% url "checkout" %}" id="bookingForm">
                     {% csrf_token %}
                     <input type="hidden" name="bus_id" value="{{ bus.id }}">
+                    <input type="hidden" name="date" value="{{ date }}">
                     <input type="hidden" name="from_city" value="{{ from_city }}">
                     <input type="hidden" name="to_city" value="{{ to_city }}">
                     <input type="hidden" name="ticket_time" value="{{ departure_time }}">

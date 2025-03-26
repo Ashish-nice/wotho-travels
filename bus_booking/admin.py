@@ -2,8 +2,8 @@ from django.contrib import admin
 #from django.contrib.auth.models import Group
 #from django.contrib.sites.models import Site
 #from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
-from allauth.account.models import EmailAddress
-from .models import Bus, Booking, Schedule, City
+#from allauth.account.models import EmailAddress
+from .models import Bus, Booking, Schedule, City, Journey, Ticket
 #Making my admin page look good
 
 admin.site.site_header = 'Wotho travels Admin page'
@@ -21,14 +21,23 @@ class BusAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'bus', 'from_city', 'to_city', 'status')
-    list_filter = ('status', 'date_time')
+    list_display = ('id', 'user', 'bus', 'from_city', 'to_city', 'booking_payment')
     search_fields = ('id', 'user__user__username')
 
 @admin.register(City)
 class CityAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+
+@admin.register(Journey)
+class JourneyAdmin(admin.ModelAdmin):
+    list_display = ('schedule', 'date', 'seats')
+    search_fields = ('schedule__bus__name', 'date')
+
+@admin.register(Ticket)
+class TicketAdmin(admin.ModelAdmin):
+    list_display = ('booking', 'name', 'age')
+    search_fields = ('booking__id', 'name')
 #admin.site.unregister(Group)
 #admin.site.unregister(Site)
 #admin.site.unregister(SocialAccount)

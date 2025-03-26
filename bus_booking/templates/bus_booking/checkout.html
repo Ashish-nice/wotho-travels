@@ -1,87 +1,113 @@
 {% extends 'bus_booking/base.html' %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Checkout</h3>
-                </div>
-                <div class="card-body">
-                    <form id="checkoutForm">
-                        <!-- Payment Details -->
-                        <div class="payment-section mb-4">
-                            <h4>Payment Details</h4>
-                            <div class="form-group">
-                                <label>Card Number</label>
-                                <input type="text" class="form-control" id="cardNumber" required>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Expiry Date</label>
-                                        <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>CVV</label>
-                                        <input type="password" class="form-control" id="cvv" maxlength="3" required>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-                        <!-- OTP Verification -->
-                        <div class="otp-section" style="display: none;">
-                            <h4>OTP Verification</h4>
-                            <p>Enter the OTP sent to your mobile number</p>
-                            <div class="form-group">
-                                <input type="text" class="form-control" id="otp" maxlength="6" required>
-                            </div>
-                            <div id="otpTimer" class="mt-2">
-                                Time remaining: <span id="timer">02:00</span>
-                            </div>
-                            <button type="button" class="btn btn-link" id="resendOtp">Resend OTP</button>
-                        </div>
-
-                        <div class="text-center mt-4">
-                            <button type="button" id="proceedBtn" class="btn btn-primary">Proceed to Pay</button>
-                            <button type="submit" id="verifyOtpBtn" class="btn btn-success" style="display: none;">Verify OTP</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl transition-all duration-300 hover:shadow-lg">
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-4">
+      <h1 class="text-2xl font-bold text-white flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        Checkout
+      </h1>
     </div>
-</div>
-
-<script>
-    document.getElementById('proceedBtn').addEventListener('click', function() {
-        // Show OTP section and start timer
-        document.querySelector('.otp-section').style.display = 'block';
-        document.getElementById('proceedBtn').style.display = 'none';
-        document.getElementById('verifyOtpBtn').style.display = 'block';
-        startTimer();
-    });
-
-    function startTimer() {
-        let timeLeft = 120;
-        const timerDisplay = document.getElementById('timer');
+    <!-- Message Box for Success/Error Notifications -->
+    <div class="p-4">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="rounded-md p-4 mb-4 {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %} flex items-center">
+            <div class="flex-shrink-0 mr-3">
+              {% if message.tags == 'success' %}
+                <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              {% elif message.tags == 'error' %}
+                <svg class="h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              {% elif message.tags == 'warning' %}
+                <svg class="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              {% else %}
+                <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              {% endif %}
+            </div>
+            <div>{{ message }}</div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    
+    <div class="p-6">
+      <form id="checkoutForm" method="post" action="{% url 'transact' %}" class="space-y-6">
+        {% csrf_token %}
         
-        const timer = setInterval(function() {
-            const minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
-            seconds = seconds < 10 ? '0' + seconds : seconds;
+        <!-- Wallet Balance -->
+        <div class="wallet-balance mb-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            Your Wallet
+          </h2>
+          
+          <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">Available Balance</span>
+              <span class="font-bold text-xl text-green-600">₹{{ wallet_balance|floatformat:2 }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Fare Summary -->
+        <div class="fare-summary">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            Fare Summary
+          </h2>
+          
+          <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
+            <div class="flex justify-between mb-3">
+              <span class="text-gray-600">Base Fare</span>
+              <span id="baseFare" class="font-medium text-gray-800">₹{{ base_fare|floatformat:2 }}</span>
+            </div>
             
-            timerDisplay.textContent = `${minutes}:${seconds}`;
+            <div class="flex justify-between mb-4">
+              <span class="text-gray-600">Taxes & Fees</span>
+              <span id="taxes" class="font-medium text-gray-800">₹{{ taxes|floatformat:2 }}</span>
+            </div>
             
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                document.getElementById('resendOtp').style.display = 'block';
-            }
-            timeLeft--;
-        }, 1000);
-    }
-</script>
+            <div class="h-px bg-gray-200 my-3"></div>
+            
+            <div class="flex justify-between mt-2">
+              <span class="text-lg font-semibold text-gray-800">Total Amount</span>
+              <span id="totalFare" class="text-lg font-bold text-blue-600">₹{{ total_fare|floatformat:2 }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4">
+          <button type="submit" id="proceedBtn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center transition-transform duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            Proceed to Pay ₹{{ total_fare|floatformat:2 }}
+          </button>
+        </div>
+        
+      </form>
+      
+      <div class="mt-6 text-center text-sm text-gray-500">
+        <p>Your payment information is encrypted and secure</p>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

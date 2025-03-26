@@ -75,9 +75,32 @@
             font-size: 2rem;
         }
     }
+    .messages-container {
+        max-width: 600px;
+        margin: 0 auto 1.5rem auto;
+    }
+    .message {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 10px;
+        background-color: #EFF6FF;
+        color: #1E40AF;
+        border: 1px solid #BFDBFE;
+        font-weight: 500;
+    }
 </style>
 
 <div class="page-container">
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="message">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
     <div class="search-container">
         <div class="header">
             <h2>Find Your Bus</h2>
@@ -108,4 +131,26 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('date');
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const minDate = `${year}-${month}-${day}`;
+        
+        dateInput.min = minDate;
+        
+        // If the user tries to select a past date, reset to today
+        dateInput.addEventListener('change', function() {
+            if (this.value < minDate) {
+                this.value = minDate;
+                alert('Please select today or a future date');
+            }
+        });
+    });
+</script>
 {% endblock %}

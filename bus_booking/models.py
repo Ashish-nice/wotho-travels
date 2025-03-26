@@ -50,7 +50,6 @@ class Schedule(models.Model):
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
     city = models.ForeignKey(City, on_delete=models.CASCADE)
     day = models.CharField(max_length=10, choices=DAYS_OF_WEEK)
-    seats = models.IntegerField(null=True, blank=True)
     arrival_time = models.TimeField()
     departure_time = models.TimeField()
     stop_number = models.PositiveIntegerField()
@@ -72,11 +71,26 @@ class Schedule(models.Model):
             self.seats = self.bus.capacity
         super().save(*args, **kwargs)
 
+class Journey(models.Model):
+    schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
+    date = models.DateField()
+    seats = models.PositiveIntegerField(null=True, blank=True)
+    def save(self, *args, **kwargs):
+        if self.seats is None:
+            self.seats = self.schedule.bus.capacity
+        super().save()
+
+
 class Ticket(models.Model):
+    booking = models.ForeignKey('Booking', on_delete=models.CASCADE, related_name='tickets')
     name = models.CharField(max_length=50)
     age = models.PositiveIntegerField()
     seat_type = models.CharField(max_length=8,choices=SEAT_TYPES)
     conditioning = models.CharField(max_length=12,choices=CONDITIONING)
+    ticket_payment = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.name} - {self.booking.bus.name}"
 
 class Booking(models.Model):
     STATUS = [
@@ -87,15 +101,13 @@ class Booking(models.Model):
 
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    bus = models.ForeignKey(Bus, on_delete=models.CASCADE)
+    bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name="bookings", null=True)
+    journey_date = models.DateField(null=True)
     from_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="departures")
     to_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="arrivals")    
     total_fare = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     seats = models.PositiveIntegerField(default=1)
-    date_time = models.DateTimeField()
-    status = models.CharField(
-        max_length=20, 
-        choices=STATUS, 
-        default='BOOKED'
-    )
+    otp = models.CharField(max_length=6, null=True, blank=True)
+    booking_date = models.DateTimeField(auto_now_add=True,null=True)
+    booking_payment = models.BooleanField(default=False)
 

@@ -1,14 +1,14 @@
 from django.shortcuts import render
-from .models import Bus,Booking,Schedule, Ticket
+from .models import Bus,Booking,Ticket,City,Journey,Schedule
 from django.views.generic import ListView,DetailView
-from datetime import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
-from datetime import timedelta
+from datetime import date, timedelta, datetime
 from django.shortcuts import redirect
 from django.contrib import messages
-from django.db.models import Q
 from django.http import JsonResponse
+from .utils import generate_otp,send_booking_otp
+from django.db import transaction
 
 # Create your views here.
 
@@ -67,31 +67,35 @@ class BusDetailView(RouteParamsMixin, LoginRequiredMixin, DetailView):
         to_schedule = self.object.schedule_set.get(
             city__name=self.to_city
         )
-        available_seats = from_schedule.seats
+        date_obj = datetime.strptime(self.date, "%Y-%m-%d").date()
+        if(Journey.objects.filter(schedule=from_schedule,date=date_obj-timedelta(days=date_obj.isoweekday()%7)).exists()):
+            available_seats=Journey.objects.get(schedule=from_schedule,date=date_obj-timedelta(days=date_obj.isoweekday()%7)).seats
+        else:
+            available_seats=self.object.capacity
         print(available_seats)
-        for i in range (from_schedule.stop_number, to_schedule.stop_number):
-            available_seats = min(available_seats, self.object.schedule_set.get(stop_number=i).seats)
-
+        for i in range (from_schedule.stop_number, to_schedule.stop_number+1):
+            if(Journey.objects.filter(schedule=from_schedule,date=date_obj-timedelta(days=date_obj.isoweekday()%7)).exists()):
+                available_seats = min(available_seats, Journey.objects.get(schedule=self.object.schedule_set.get(stop_number=i),date=date_obj-timedelta(days=date_obj.isoweekday()%7)).seats)
         context.update({
                 'departure_time': from_schedule.departure_time,
                 'arrival_time': to_schedule.arrival_time,
                 'departure_day': from_schedule.day,
                 'arrival_day': to_schedule.day,
                 'available_seats': available_seats,
+                'date': self.date
         })
         return context
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         passenger_count = int(request.POST.get('passenger_count'))
-        
         passenger_names = request.POST.getlist('passenger_name[]')
         passenger_ages = request.POST.getlist('passenger_age[]')
         seat_types = request.POST.getlist('seat_type[]')
         conditioning = request.POST.getlist('conditioning[]')
         
-
-        
+        # Redirect to checkout with form data
+        return redirect(f'/checkout/?bus_id={self.object.id}&from_city={self.from_city}&to_city={self.to_city}&date={self.date}&passenger_count={passenger_count}&passenger_names={",".join(passenger_names)}&passenger_ages={",".join(passenger_ages)}&seat_types={",".join(seat_types)}&conditioning={",".join(conditioning)}')
 
 class UserBookingsView(LoginRequiredMixin, ListView):
     model = Booking
@@ -126,16 +130,22 @@ def checkout(request):
         passenger_ages = request.POST.getlist('passenger_age[]')
         seat_types = request.POST.getlist('seat_type[]')
         conditioning = request.POST.getlist('conditioning[]')
-        print(bus_id)
+        
         bus = Bus.objects.get(id=bus_id)
         
         # Calculate total fare for all passengers
         total_fare = 0
+        base_fare = 0
+        taxes = 0
+        
         for i in range(passenger_count):
             fare = calculate_fare(bus, from_city, to_city, seat_types[i], conditioning[i])
-            total_fare += fare
+            base_fare += fare
         
-        # Store booking data in session for later use
+        taxes = base_fare*0.18
+        total_fare = base_fare+taxes
+        
+        # Store booking data in session for later use (without OTP at this point)
         request.session['booking_data'] = {
             'bus_id': bus_id,
             'from_city': from_city,
@@ -146,12 +156,17 @@ def checkout(request):
             'passenger_ages': passenger_ages,
             'seat_types': seat_types,
             'conditioning': conditioning,
-            'total_fare': total_fare
+            'total_fare': float(total_fare),
+            'base_fare': float(base_fare),
+            'taxes': float(taxes)
         }
-        
         return render(request, 'bus_booking/checkout.html', {
             'total_fare': total_fare,
-            'passenger_count': passenger_count
+            'base_fare': base_fare,
+            'taxes': taxes,
+            'passenger_count': passenger_count,
+            'email': request.user.email,
+            'wallet_balance': request.user.profile.user_wallet
         })
     
     # If user refreshes the page, try to get data from session
@@ -159,11 +174,69 @@ def checkout(request):
     if booking_data:
         return render(request, 'bus_booking/checkout.html', {
             'total_fare': booking_data['total_fare'],
-            'passenger_count': booking_data['passenger_count']
+            'base_fare': booking_data['base_fare'],
+            'taxes': booking_data['taxes'],
+            'passenger_count': booking_data['passenger_count'],
+            'email': request.user.email,
+            'wallet_balance': request.user.profile.user_wallet
         })
     
     # If no data is available, redirect to home
     return redirect('home')
+
+def transact(request):
+    print(request.method)
+    if request.method == 'POST':
+        # Get booking data from session
+        booking_data = request.session.get('booking_data')
+        if not booking_data:
+            messages.error(request, 'Booking session expired. Please try again.')
+            return redirect('home')
+        if request.user.profile.user_wallet < booking_data['total_fare']:
+            messages.error(request, 'Insufficient balance in wallet. Please recharge and try again.')
+            return redirect('checkout')
+        # Generate and send OTP
+        otp = generate_otp()
+        email_sent = send_booking_otp(request.user.email, otp)
+        
+        if not email_sent:
+            messages.error(request, 'Failed to send OTP. Please try again.')
+            return redirect('home')
+        
+        # Add OTP to booking data in session
+        booking_data['otp'] = otp
+        booking_data['otp_date_time'] = datetime.now().timestamp()
+        request.session['booking_data'] = booking_data       
+            
+        Booking.objects.get_or_create(
+                user=request.user.profile,
+                bus=Bus.objects.get(id=booking_data['bus_id']),
+                from_city=City.objects.get(name=booking_data['from_city']),
+                to_city=City.objects.get(name=booking_data['to_city']),
+                total_fare=booking_data['total_fare'],
+                seats=booking_data['passenger_count'],
+                journey_date=booking_data['date'],
+                booking_date=timezone.now(),
+                otp=booking_data['otp'],
+            )
+        for i in range(booking_data['passenger_count']):
+            Ticket.objects.get_or_create(
+                booking=Booking.objects.get(otp=booking_data['otp']),
+                name=booking_data['passenger_names'][i],
+                age=booking_data['passenger_ages'][i],
+                seat_type=booking_data['seat_types'][i],
+                conditioning=booking_data['conditioning'][i],
+            )
+        return render(request, 'bus_booking/transaction.html', {
+            'total_fare': booking_data['total_fare'],
+            'base_fare': booking_data['base_fare'],
+            'taxes': booking_data['taxes'],
+            'email': request.user.email,
+        })
+    
+    # If user tries to access this page directly, redirect to checkout
+    return redirect('home')
+
 
 def calculate_fare(bus, from_city, to_city, seat_type, conditioning):
     try:
@@ -181,15 +254,15 @@ def calculate_fare(bus, from_city, to_city, seat_type, conditioning):
         
         # Additional charges based on seat type
         if seat_type == 'Sleeper':
-            seat_charge = stops * 200
+            seat_charge = stops * 400
         else:  # Seater
-            seat_charge = stops * 100
+            seat_charge = stops * 300
         
         # Additional charges for AC
-        ac_charge = 300 if conditioning == 'AC' else 0
+        ac_charge = 400 if conditioning == 'AC' else 0
         
         # Total fare
-        total_fare = base_fare + seat_charge + ac_charge
+        total_fare = base_fare*stops + seat_charge + ac_charge
         
         return total_fare
     except Exception as e:
@@ -198,55 +271,86 @@ def calculate_fare(bus, from_city, to_city, seat_type, conditioning):
 
 def verify_otp(request):
     if request.method == 'POST':
-        otp = request.POST.get('otp')
-        # In a real application, verify OTP against what was sent
-        # For demo purposes, accept any 6-digit OTP
-        if otp and len(otp) == 6 and otp.isdigit():
-            # Get booking data from session
-            booking_data = request.session.get('booking_data')
-            if booking_data:
-                bus = Bus.objects.get(id=booking_data['bus_id'])
-                # Create booking
-                booking = Booking(
-                    ticket_user=request.user.profile,
-                    bus=bus,
-                    ticket_time=datetime.strptime(booking_data['date'], '%Y-%m-%d'),
-                    ticket_fare=booking_data['total_fare'],
-                    ticket_status='Booked'
-                )
-                booking.save()
-                
-                # Create tickets for each passenger
-                for i in range(booking_data['passenger_count']):
-                    passenger = Ticket(
-                        booking=booking,
-                        name=booking_data['passenger_names'][i],
-                        age=booking_data['passenger_ages'][i],
-                        seat_type=booking_data['seat_types'][i],
-                        conditioning=booking_data['conditioning'][i]
-                    )
-                    passenger.save()
-                
-                # Clear session data
+        entered_otp = request.POST.get('otp')
+        booking_data = request.session.get('booking_data')
+        
+        if not booking_data:
+            messages.error(request, 'Booking session expired. Please try again.')
+            return redirect('home')
+        
+        # Check OTP expiration (10 minutes)
+        otp_age = datetime.now().timestamp() - booking_data['otp_date_time']
+        if otp_age > 300:  # 600 seconds = 10 minutes
+            messages.error(request, 'OTP expired. Please request a new one.')
+            return redirect('transact')
+        print(entered_otp)
+        print(booking_data['otp'])
+        if int(entered_otp)==int(booking_data['otp']):
+            try:
+                with transaction.atomic():
+                    profile = request.user.profile
+                    profile.user_wallet -= booking_data['total_fare']
+                    profile.save()
+                    # Get bus and cities
+                    bus = Bus.objects.get(id=booking_data['bus_id'])
+                    from_stop = bus.schedule_set.get(city=booking_data['from_city']).stop_number
+                    to_stop = bus.schedule_set.get(city=booking_data['to_city']).stop_number   
+
+                    for i in range(from_stop, to_stop+1):
+                        schedule = bus.schedule_set.get(stop_number=i)
+                        print(booking_data['date'])
+                        date = datetime.strptime(booking_data['date'], '%Y-%m-%d').date()
+                        journey, created = Journey.objects.get_or_create(schedule=schedule,date=date-timedelta(days=date.isoweekday()%7))
+                        print(booking_data['passenger_count'])
+                        journey.seats -= booking_data['passenger_count']
+                        journey.save()  
+
+                    booking=Booking.objects.get(otp=entered_otp)
+                    booking.booking_payment = True
+                    booking.save()
+
+                    for i in range(booking_data['passenger_count']):
+                        ticket = booking.tickets.get(name=booking_data['passenger_names'][i])
+                        ticket.ticket_payment = True
+                        ticket.save() 
+
+                    request.session['confirmed_booking_id'] = booking.id
+
+                # Clear session after successful booking
                 del request.session['booking_data']
-                
-                messages.success(request, 'Booking successful!')
-                return redirect('bookings')
+                messages.success(request, 'Booking confirmed successfully!')
+                print('Booking successful')
+                return redirect('transaction_success')
+            except Exception as e:
+                messages.error(request, f'Error processing booking: {str(e)}')
+                print('Booking failed, OTP verified')
+                return redirect('transact')
         
         messages.error(request, 'Invalid OTP. Please try again.')
-    
-    return redirect('checkout')
+        print('Booking failed, OTP not verified')
+    return redirect('transact')
 
 def resend_otp(request):
-    # In a real application, generate and send a new OTP
-    # For demo purposes, just return a success response
-    if request.is_ajax():
-        return JsonResponse({'success': True})
-    return redirect('checkout')
+    if request.method == 'POST':
+        booking_data = request.session.get('booking_data')
+        if booking_data:
+            # Generate new OTP
+            new_otp = generate_otp()
+            booking_data['otp'] = new_otp
+            request.session['booking_data'] = booking_data
+            
+            # In a real application, send this new OTP to user's email or phone
+            return JsonResponse({
+                'success': True, 
+                'message': 'OTP has been resent to your email',
+                'otp': new_otp  # In production, remove this
+            })
+    
+    return JsonResponse({'success': False, 'message': 'Error resending OTP'})
 
 def cancel_booking(request, booking_id):
     if request.method == 'POST':
-        booking = Booking.objects.get(ticket_id=booking_id)
+        booking = Booking.objects.get(id=booking_id)
         current_time = timezone.now()
         
         if current_time + timedelta(hours=6) < booking.ticket_time:
@@ -258,3 +362,18 @@ def cancel_booking(request, booking_id):
     
     return redirect('bookings')
 
+def transaction_success(request):
+    booking_id = request.session.get('confirmed_booking_id')
+    if booking_id:
+        booking = Booking.objects.get(id=booking_id)
+        tickets = booking.tickets.all()
+        context = {
+                'booking': booking,
+                'tickets': tickets,
+                'total_fare': booking.total_fare,
+                'from_city': booking.from_city,
+                'to_city': booking.to_city,
+                'passenger_count': booking.seats
+            }
+        del request.session['confirmed_booking_id']
+        return render(request, 'bus_booking/transaction_success.html',context)

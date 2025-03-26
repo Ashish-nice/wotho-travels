@@ -1,0 +1,237 @@
+{% extends 'bus_booking/base.html' %}
+{% block title %}Booking Successful - Wotho Travels{% endblock %}
+{% block content %}
+<style>
+    .success-container {
+        max-width: 700px;
+        margin: 3rem auto;
+    }
+    .success-card {
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    .success-header {
+        background: linear-gradient(135deg, #00A067 0%, #198754 100%);
+        padding: 2rem;
+        text-align: center;
+    }
+    .check-icon {
+        background: white;
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+    }
+    .details-section {
+        padding: 2rem;
+        background: white;
+    }
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    .detail-label {
+        color: #6B7280;
+        font-weight: 500;
+    }
+    .detail-value {
+        color: #1F2937;
+        font-weight: 600;
+    }
+    .passenger-details {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .passenger-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    .passenger-card:last-child {
+        margin-bottom: 0;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    .btn-view-bookings {
+        background: linear-gradient(135deg, #FF3D00 0%, #FF1744 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-align: center;
+        flex: 1;
+    }
+    .btn-view-bookings:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(255, 61, 0, 0.2);
+    }
+    .btn-home {
+        background: white;
+        border: 2px solid #FF3D00;
+        color: #FF3D00;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-align: center;
+        flex: 1;
+    }
+    .btn-home:hover {
+        background: rgba(255, 61, 0, 0.05);
+        transform: translateY(-2px);
+    }
+    .confetti {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background-color: #FF3D00;
+        border-radius: 50%;
+        animation: confetti-fall 5s ease-out forwards;
+        z-index: -1;
+    }
+    @keyframes confetti-fall {
+        0% {
+            transform: translateY(-100vh) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+</style>
+
+<div class="success-container">
+    <div class="success-card">
+        <div class="success-header">
+            <div class="check-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h2 class="text-white text-3xl font-bold mb-2">Booking Successful!</h2>
+            <p class="text-white opacity-90">Your tickets have been confirmed.</p>
+        </div>
+        
+        <div class="details-section">
+            <h3 class="text-xl font-bold mb-4">Booking Details</h3>
+            
+            <div class="detail-row">
+                <span class="detail-label">Booking ID</span>
+                <span class="detail-value">{{ booking.id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Journey</span>
+                <span class="detail-value">{{ booking.from_city }} to {{ booking.to_city }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Bus</span>
+                <span class="detail-value">{{ booking.bus.name }} ({{ booking.bus.number }})</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Date of booking</span>
+                <span class="detail-value">{{ booking.booking_date }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Date of Travel</span>
+                <span class="detail-value">{{ booking.journey_date }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Number of Seats</span>
+                <span class="detail-value">{{ booking.seats }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Total Amount Paid</span>
+                <span class="detail-value">₹{{ booking.total_fare|floatformat:2 }}</span>
+            </div>
+            
+            <div class="passenger-details">
+                <h4 class="text-lg font-semibold mb-3">Passenger Information</h4>
+                
+                {% for ticket in booking.tickets.all %}
+                <div class="passenger-card">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-medium text-gray-800">{{ ticket.name }}</span>
+                        <span class="text-sm bg-green-100 text-green-800 py-1 px-2 rounded-full">Confirmed</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                            <span class="text-gray-500">Age:</span>
+                            <span class="ml-1">{{ ticket.age }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Seat Type:</span>
+                            <span class="ml-1">{{ ticket.seat_type }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Class:</span>
+                            <span class="ml-1">{{ ticket.conditioning }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="action-buttons">
+                <a href="{% url 'bookings' %}" class="btn-view-bookings">View My Bookings</a>
+                <a href="{% url 'home' %}" class="btn-home">Back to Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Create confetti effect
+    document.addEventListener('DOMContentLoaded', function() {
+        createConfetti();
+    });
+
+    function createConfetti() {
+        const colors = ['#FF3D00', '#00A067', '#146c43', '#FF1744', '#FFB74D'];
+        
+        for (let i = 0; i < 100; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = `${Math.random() * 100}vw`;
+            confetti.style.animationDuration = `${3 + Math.random() * 4}s`;
+            confetti.style.animationDelay = `${Math.random() * 2}s`;
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Randomly change confetti shape
+            if (Math.random() > 0.6) {
+                confetti.style.borderRadius = '0';
+                confetti.style.width = '7px';
+                confetti.style.height = '15px';
+            } else if (Math.random() > 0.3) {
+                confetti.style.width = '12px';
+                confetti.style.height = '12px';
+                confetti.style.borderRadius = '4px';
+            }
+            
+            document.body.appendChild(confetti);
+            
+            // Remove confetti after animation completes
+            setTimeout(() => {
+                confetti.remove();
+            }, 7000);
+        }
+    }
+</script>
+{% endblock %}
