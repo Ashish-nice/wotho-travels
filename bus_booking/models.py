@@ -102,7 +102,7 @@ class Booking(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name="bookings", null=True)
-    journey_date = models.DateField(null=True)
+    journey_date = models.DateTimeField(null=True)
     from_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="departures")
     to_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name="arrivals")    
     total_fare = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

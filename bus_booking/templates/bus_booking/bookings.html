@@ -7,6 +7,8 @@
     }
     .bookings-section {
         padding: 2rem;
+        max-width: 1100px;
+        margin: 0 auto;
     }
     .section-title {
         font-size: 1.8rem;
@@ -28,24 +30,30 @@
     }
     .bookings-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
         gap: 2rem;
-        margin-bottom: 4rem;
+        margin-bottom: 2rem;
     }
     .booking-card {
         background: white;
         border-radius: 15px;
         overflow: hidden;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        transition: transform 0.2s ease;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        width: 100%;
+        border: 1px solid rgba(0,0,0,0.05);
     }
     .booking-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
     }
     .booking-header {
         background: linear-gradient(135deg, #FF3D00 0%, #00A067 100%);
         color: white;
         padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
     }
     .bus-name {
         font-size: 1.4rem;
@@ -75,6 +83,8 @@
         padding: 1.5rem;
         background: #f8f9fa;
         border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 10px;
     }
     .cancel-btn {
         background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
@@ -98,13 +108,199 @@
         font-size: 0.875rem;
         font-weight: 600;
     }
-    .status-active { background: #10B981; color: white; }
+    .status-paid { background: #10B981; color: white; }
+    .status-unpaid { background: #F59E0B; color: white; }
     .status-cancelled { background: #EF4444; color: white; }
     .empty-state {
         text-align: center;
         padding: 2rem;
         color: #6B7280;
         font-size: 1.1rem;
+        background: rgba(255,255,255,0.7);
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    }
+    .view-tickets-btn {
+        background: linear-gradient(135deg, #00A067 0%, #059669 100%);
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 0.8rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+    }
+    .view-tickets-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 160, 103, 0.3);
+    }
+    .view-more-container {
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 3rem;
+    }
+    .view-more-btn {
+        background: #1F2937;
+        color: white;
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: inline-block;
+    }
+    .view-more-btn:hover {
+        background: #374151;
+        transform: translateY(-2px);
+    }
+    .hidden-booking {
+        display: none;
+    }
+    .journey-icon {
+        display: inline-block;
+        margin-right: 0.5rem;
+        opacity: 0.8;
+    }
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        position: relative;
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #1F2937;
+    }
+    
+    .modal-text {
+        margin-bottom: 2rem;
+        color: #4B5563;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .confirm-cancel-btn {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        flex: 1;
+    }
+    
+    .cancel-modal-btn {
+        background: #E5E7EB;
+        color: #4B5563;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        flex: 1;
+    }
+    
+    .confirm-cancel-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .cancel-modal-btn:hover {
+        background: #D1D5DB;
+    }
+
+    /* Messages Styles */
+    .messages-container {
+        max-width: 1100px;
+        margin: 0 auto 2rem auto;
+        padding: 0 2rem;
+    }
+    
+    .message {
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .message-success {
+        background-color: #D1FAE5;
+        border-left: 4px solid #10B981;
+        color: #065F46;
+    }
+    
+    .message-error {
+        background-color: #FEE2E2;
+        border-left: 4px solid #EF4444;
+        color: #B91C1C;
+    }
+    
+    .message-info {
+        background-color: #DBEAFE;
+        border-left: 4px solid #3B82F6;
+        color: #1E40AF;
+    }
+    
+    .message-warning {
+        background-color: #FEF3C7;
+        border-left: 4px solid #F59E0B;
+        color: #92400E;
+    }
+    
+    .message-text {
+        font-weight: 500;
+    }
+    
+    .message-close {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    
+    .message-close:hover {
+        opacity: 1;
     }
 </style>
 
@@ -112,16 +308,30 @@
     <h1 class="text-4xl font-bold gradient-text">My Bookings</h1>
 </div>
 
+<!-- Messages container -->
+<div class="messages-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                <span class="message-text">{{ message }}</span>
+                <button class="message-close">&times;</button>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
 <div class="bookings-section">
     <h2 class="section-title">Upcoming Journeys</h2>
     {% if upcoming_bookings %}
-    <div class="bookings-grid">
+    <div class="bookings-grid" id="upcoming-bookings-grid">
         {% for booking in upcoming_bookings %}
-        <div class="booking-card">
+        <div class="booking-card {% if forloop.counter > 2 %}hidden-booking{% endif %}">
             <div class="booking-header">
-                <h3 class="bus-name">{{ booking.bus.name }}</h3>
-                <div class="status-badge {% if booking.status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
-                    {{ booking.status }}
+                <div>
+                    <h3 class="bus-name">{{ booking.bus.name }}</h3>
+                    <div class="status-badge {% if booking.booking_payment %}status-paid{% else %}status-unpaid{% endif %}">
+                        {{ booking.booking_payment|yesno:"Paid,Unpaid" }}
+                    </div>
                 </div>
             </div>
             
@@ -136,11 +346,11 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Date:</span>
-                    <span class="info-value">{{ booking.time|date:"F d, Y" }}</span>
+                    <span class="info-value">{{ booking.journey_date|date:"F d, Y" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Time:</span>
-                    <span class="info-value">{{ booking.time|time:"H:i" }}</span>
+                    <span class="info-value">{{ booking.journey_date|time:"H:i" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Seats:</span>
@@ -148,34 +358,45 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Fare:</span>
-                    <span class="info-value">₹{{ booking.fare }}</span>
+                    <span class="info-value">₹{{ booking.total_fare }}</span>
                 </div>
             </div>
 
-            {% if booking.status != 'Cancelled' %}
             <div class="booking-footer">
-                <form method="POST" action="{% url 'cancel_booking' booking.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="cancel-btn">Cancel Booking</button>
-                </form>
+                <a href="{% url 'tickets' booking.id %}" class="view-tickets-btn">View Tickets</a>
+                {% if booking.ticket_status != 'Cancelled' %}
+                <button class="cancel-btn" data-booking-id="{{ booking.id }}">Cancel Booking</button>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
         {% endfor %}
     </div>
+    
+    {% if upcoming_bookings.count > 2 %}
+    <div class="view-more-container">
+        <button id="view-more-upcoming" class="view-more-btn">View More Bookings</button>
+    </div>
+    {% endif %}
+    
     {% else %}
     <div class="empty-state">No upcoming bookings</div>
     {% endif %}
 
     <h2 class="section-title">Past Journeys</h2>
     {% if past_bookings %}
-    <div class="bookings-grid">
+    <div class="bookings-grid" id="past-bookings-grid">
         {% for booking in past_bookings %}
-        <div class="booking-card">
+        <div class="booking-card {% if forloop.counter > 2 %}hidden-booking{% endif %}">
             <div class="booking-header">
-                <h3 class="bus-name">{{ booking.bus.bus_name }}</h3>
-                <div class="status-badge {% if booking.status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
-                    {{ booking.status }}
+                <div>
+                    <h3 class="bus-name">{{ booking.bus.name }}</h3>
+                    {% if booking.ticket_status == 'Cancelled' %}
+                    <div class="status-badge status-cancelled">Cancelled</div>
+                    {% else %}
+                    <div class="status-badge {% if booking.booking_payment %}status-paid{% else %}status-unpaid{% endif %}">
+                        {{ booking.booking_payment|yesno:"Paid,Unpaid" }}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -190,11 +411,11 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Date:</span>
-                    <span class="info-value">{{ booking.time|date:"F d, Y" }}</span>
+                    <span class="info-value">{{ booking.journey_date|date:"F d, Y" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Time:</span>
-                    <span class="info-value">{{ booking.time|time:"H:i" }}</span>
+                    <span class="info-value">{{ booking.journey_date|time:"H:i" }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Seats:</span>
@@ -202,14 +423,231 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Fare:</span>
-                    <span class="info-value">₹{{ booking.fare }}</span>
+                    <span class="info-value">₹{{ booking.total_fare }}</span>
                 </div>
+            </div>
+
+            <div class="booking-footer">
+                <a href="{% url 'tickets' booking.id %}" class="view-tickets-btn">View Tickets</a>
             </div>
         </div>
         {% endfor %}
     </div>
+    
+    {% if past_bookings.count > 2 %}
+    <div class="view-more-container">
+        <button id="view-more-past" class="view-more-btn">View More Bookings</button>
+    </div>
+    {% endif %}
+    
     {% else %}
     <div class="empty-state">No past journeys</div>
     {% endif %}
 </div>
+
+<!-- Cancellation Modal -->
+<div id="cancelModal" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Cancel Booking</h3>
+        <p class="modal-text">Are you sure you want to cancel this booking? This action cannot be undone.</p>
+        <div class="modal-buttons">
+            <button id="confirmCancelBtn" class="confirm-cancel-btn">Yes, Cancel Booking</button>
+            <button id="cancelModalBtn" class="cancel-modal-btn">No, Keep Booking</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Message close functionality
+        const messageCloseButtons = document.querySelectorAll('.message-close');
+        messageCloseButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const message = this.parentElement;
+                message.style.opacity = '0';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 300);
+            });
+        });
+        
+        // Auto-hide messages after 5 seconds
+        setTimeout(() => {
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(message => {
+                message.style.opacity = '0';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 300);
+            });
+        }, 5000);
+
+        const viewMoreUpcomingBtn = document.getElementById('view-more-upcoming');
+        const viewMorePastBtn = document.getElementById('view-more-past');
+        
+        if (viewMoreUpcomingBtn) {
+            viewMoreUpcomingBtn.addEventListener('click', function() {
+                const hiddenBookings = document.querySelectorAll('#upcoming-bookings-grid .hidden-booking');
+                hiddenBookings.forEach(booking => {
+                    booking.classList.remove('hidden-booking');
+                });
+                this.style.display = 'none';
+            });
+        }
+        
+        if (viewMorePastBtn) {
+            viewMorePastBtn.addEventListener('click', function() {
+                const hiddenBookings = document.querySelectorAll('#past-bookings-grid .hidden-booking');
+                hiddenBookings.forEach(booking => {
+                    booking.classList.remove('hidden-booking');
+                });
+                this.style.display = 'none';
+            });
+        }
+        
+        // Cancel booking functionality
+        const cancelBtns = document.querySelectorAll('.cancel-btn');
+        const modal = document.getElementById('cancelModal');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        let currentBookingId = null;
+        
+        cancelBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentBookingId = this.dataset.bookingId;
+                modal.style.display = 'flex';
+            });
+        });
+        
+        cancelModalBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+        
+        confirmCancelBtn.addEventListener('click', function() {
+            if (currentBookingId) {
+                // Send cancel request to server
+                fetch(`/main/cancel-booking/${currentBookingId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Display only the message from the JSON response
+                        const responseDiv = document.createElement('div');
+                        responseDiv.className = 'message message-success';
+                        responseDiv.innerHTML = `
+                            <span class="message-text">${data.message}</span>
+                            <button class="message-close">&times;</button>
+                        `;
+                        
+                        // Add to page
+                        document.querySelector('.messages-container').appendChild(responseDiv);
+                        
+                        // Add close functionality
+                        const closeButton = responseDiv.querySelector('.message-close');
+                        closeButton.addEventListener('click', function() {
+                            responseDiv.style.opacity = '0';
+                            setTimeout(() => {
+                                responseDiv.remove();
+                            }, 300);
+                        });
+                        
+                        // Reload after showing the response
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                    } else {
+                        // Show error message only
+                        const responseDiv = document.createElement('div');
+                        responseDiv.className = 'message message-error';
+                        responseDiv.innerHTML = `
+                            <span class="message-text">${data.message || 'An error occurred while processing your request.'}</span>
+                            <button class="message-close">&times;</button>
+                        `;
+                        
+                        document.querySelector('.messages-container').appendChild(responseDiv);
+                        
+                        // Add close functionality
+                        const closeButton = responseDiv.querySelector('.message-close');
+                        closeButton.addEventListener('click', function() {
+                            responseDiv.style.opacity = '0';
+                            setTimeout(() => {
+                                responseDiv.remove();
+                            }, 300);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('An error occurred while cancelling the booking.', 'error');
+                })
+                .finally(() => {
+                    modal.style.display = 'none';
+                });
+            }
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        // Helper function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Helper function to display messages dynamically
+        function showMessage(text, type = 'info') {
+            const messagesContainer = document.querySelector('.messages-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.innerHTML = `
+                <span class="message-text">${text}</span>
+                <button class="message-close">&times;</button>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // Add close functionality to the new message
+            const closeButton = messageDiv.querySelector('.message-close');
+            closeButton.addEventListener('click', function() {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 300);
+            });
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 300);
+            }, 5000);
+        }
+    });
+</script>
 {% endblock content %}

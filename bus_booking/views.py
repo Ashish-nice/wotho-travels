@@ -3,15 +3,15 @@ from .models import Bus,Booking,Ticket,City,Journey,Schedule
 from django.views.generic import ListView,DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from .utils import generate_otp,send_booking_otp
 from django.db import transaction
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
-
 def home(request):
     return render(request, 'bus_booking/home.html')
 
@@ -97,28 +97,7 @@ class BusDetailView(RouteParamsMixin, LoginRequiredMixin, DetailView):
         # Redirect to checkout with form data
         return redirect(f'/checkout/?bus_id={self.object.id}&from_city={self.from_city}&to_city={self.to_city}&date={self.date}&passenger_count={passenger_count}&passenger_names={",".join(passenger_names)}&passenger_ages={",".join(passenger_ages)}&seat_types={",".join(seat_types)}&conditioning={",".join(conditioning)}')
 
-class UserBookingsView(LoginRequiredMixin, ListView):
-    model = Booking
-    template_name = 'bus_booking/bookings.html'
-    context_object_name = 'bookings'
-
-    def get_queryset(self):
-        return None
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        current_time = timezone.now()
-        context['upcoming_bookings'] = Booking.objects.filter(
-            ticket_user=self.request.user.profile,
-            ticket_time__gt=current_time
-        ).order_by('ticket_time')
-        context['past_bookings'] = Booking.objects.filter(
-            ticket_user=self.request.user.profile,
-            ticket_time__lte=current_time
-        ).order_by('-ticket_time')
-        
-        return context
-
+@login_required
 def checkout(request):
     if request.method == 'POST':
         bus_id = request.POST.get('bus_id')
@@ -184,6 +163,7 @@ def checkout(request):
     # If no data is available, redirect to home
     return redirect('home')
 
+@login_required
 def transact(request):
     print(request.method)
     if request.method == 'POST':
@@ -215,7 +195,7 @@ def transact(request):
                 to_city=City.objects.get(name=booking_data['to_city']),
                 total_fare=booking_data['total_fare'],
                 seats=booking_data['passenger_count'],
-                journey_date=booking_data['date'],
+                journey_date=datetime.combine(datetime.strptime(booking_data['date'],'%Y-%m-%d'),Schedule.objects.get(bus=Bus.objects.get(id=booking_data['bus_id']),city=City.objects.get(name=booking_data['from_city'])).arrival_time),
                 booking_date=timezone.now(),
                 otp=booking_data['otp'],
             )
@@ -299,7 +279,7 @@ def verify_otp(request):
                     for i in range(from_stop, to_stop+1):
                         schedule = bus.schedule_set.get(stop_number=i)
                         print(booking_data['date'])
-                        date = datetime.strptime(booking_data['date'], '%Y-%m-%d').date()
+                        date = datetime.strptime(booking_data['date'], '%Y-%m-%d')
                         journey, created = Journey.objects.get_or_create(schedule=schedule,date=date-timedelta(days=date.isoweekday()%7))
                         print(booking_data['passenger_count'])
                         journey.seats -= booking_data['passenger_count']
@@ -348,20 +328,66 @@ def resend_otp(request):
     
     return JsonResponse({'success': False, 'message': 'Error resending OTP'})
 
+@login_required
 def cancel_booking(request, booking_id):
     if request.method == 'POST':
-        booking = Booking.objects.get(id=booking_id)
-        current_time = timezone.now()
-        
-        if current_time + timedelta(hours=6) < booking.ticket_time:
-            booking.ticket_status = 'Cancelled'
-            booking.save()
-            messages.success(request, 'Booking cancelled successfully')
-        else:
-            messages.error(request, 'Bookings can only be cancelled 6 hours before departure')
-    
+        try:
+            booking = Booking.objects.get(id=booking_id)
+            current_time = timezone.now()
+            print(current_time)
+            if booking.booking_payment == False:
+                booking.delete()
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Unpaid booking deleted successfully'
+                })
+            else:    
+                if current_time + timedelta(hours=6) < booking.journey_date:
+                    with transaction.atomic():
+                        profile = request.user.profile
+                        if current_time + timedelta(hours=12) > booking.journey_date:
+                            profile.user_wallet += 0.75*booking.total_fare
+                        else:
+                            profile.user_wallet += booking.total_fare
+                        profile.save()  # Save the updated wallet amount
+                        bus = booking.bus
+                        from_stop = bus.schedule_set.get(city=booking.from_city).stop_number
+                        to_stop = bus.schedule_set.get(city=booking.to_city).stop_number
+                        # Get journey date
+                        travel_date = booking.journey_date.date()
+                        # Update all journeys along the route
+                        for i in range(from_stop, to_stop + 1):
+                            schedule = bus.schedule_set.get(bus=bus,stop_number=i)
+                            journey = Journey.objects.get(
+                                schedule=schedule,
+                                date=travel_date-timedelta(days=travel_date.isoweekday()%7)
+                            )
+                            journey.seats += booking.seats
+                            journey.save()                                                
+                        booking.delete()
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Booking cancelled successfully, check your wallet for refunded amount'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Bookings can only be cancelled 6 hours before departure'
+                    })
+
+        except Booking.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Booking not found or you do not have permission to cancel it'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=500)
     return redirect('bookings')
 
+@login_required
 def transaction_success(request):
     booking_id = request.session.get('confirmed_booking_id')
     if booking_id:
@@ -377,3 +403,45 @@ def transaction_success(request):
             }
         del request.session['confirmed_booking_id']
         return render(request, 'bus_booking/transaction_success.html',context)
+    
+class UserBookingsView(LoginRequiredMixin, ListView):
+    model = Booking
+    template_name = 'bus_booking/bookings.html'
+    context_object_name = 'bookings'
+
+    def get_queryset(self):
+        return None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        current_time = timezone.now()
+        context['upcoming_bookings'] = Booking.objects.filter(
+            user=self.request.user.profile,
+            journey_date__gt=current_time
+        ).order_by('journey_date')
+        context['past_bookings'] = Booking.objects.filter(
+            user=self.request.user.profile,
+            journey_date__lte=current_time
+        ).order_by('-journey_date')
+        
+        return context
+
+class TicketView(LoginRequiredMixin, ListView):
+    model = Ticket
+    template_name = 'bus_booking/tickets.html'
+    context_object_name = 'tickets'
+
+    def get_queryset(self):
+        booking_id = self.kwargs.get('booking_id')
+        if booking_id:
+            try:
+                booking = Booking.objects.get(
+                    id=booking_id, 
+                    user=self.request.user.profile
+                )
+                return Ticket.objects.filter(booking=booking)
+            except Booking.DoesNotExist:
+                messages.error(self.request, "Booking not found or you don't have permission to view these tickets")
+                return Ticket.objects.none()
+        else:
+            return Ticket.objects.none()

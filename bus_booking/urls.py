@@ -10,6 +10,7 @@ urlpatterns = [
     path("verify-otp/", views.verify_otp, name='verify_otp'),
     path("resend-otp/", views.resend_otp, name='resend_otp'),
     path("bookings/", views.UserBookingsView.as_view(), name='bookings'),
+    path("tickets/<int:booking_id>/", views.TicketView.as_view(), name='tickets'),
     path("cancel-booking/<int:booking_id>/", views.cancel_booking, name='cancel_booking'),
     path("transaction-success/", views.transaction_success, name='transaction_success'),
 ]

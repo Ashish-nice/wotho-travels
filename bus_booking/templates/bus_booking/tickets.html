@@ -1,0 +1,280 @@
+{% extends "bus_booking/base.html" %}
+{% block content %}
+<style>
+    .page-title {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    .tickets-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    .booking-summary {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin-bottom: 3rem;
+    }
+    .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+    .bus-details {
+        display: flex;
+        flex-direction: column;
+    }
+    .bus-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1F2937;
+    }
+    .booking-id {
+        color: #6B7280;
+        font-size: 0.9rem;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 0.3rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .status-active { background: #10B981; color: white; }
+    .status-cancelled { background: #EF4444; color: white; }
+    
+    .journey-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+    }
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    .detail-label {
+        color: #6B7280;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    .detail-value {
+        font-weight: 600;
+        color: #1F2937;
+        font-size: 1.1rem;
+    }
+    
+    .tickets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+    }
+    .ticket-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        position: relative;
+        background-image: linear-gradient(to right bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                          url('https://img.icons8.com/cotton/64/bus--v2.png');
+        background-size: 100px;
+        background-repeat: repeat;
+        background-position: center;
+    }
+    .ticket-header {
+        background: linear-gradient(135deg, #FF3D00 0%, #00A067 100%);
+        color: white;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .passenger-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+    .ticket-age {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .ticket-details {
+        padding: 1.5rem;
+    }
+    .ticket-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px dashed #e5e7eb;
+    }
+    .ticket-row:last-child {
+        border-bottom: none;
+    }
+    .ticket-label {
+        color: #6B7280;
+        font-weight: 500;
+    }
+    .ticket-value {
+        font-weight: 600;
+        color: #1F2937;
+    }
+    .ticket-footer {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #6B7280;
+    }
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #1F2937;
+        color: white;
+        border-radius: 9999px;
+        font-weight: 600;
+        text-decoration: none;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    .back-button:hover {
+        background: #374151;
+        transform: translateY(-2px);
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6B7280;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #D1D5DB;
+    }
+    .perforated-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-top: 2px dashed #e5e7eb;
+    }
+    .perforated-line-top {
+        top: 90px;
+    }
+    .barcode {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    .barcode img {
+        max-width: 80%;
+        height: 40px;
+    }
+</style>
+
+<div class="tickets-container">
+    <a href="{% url 'bookings' %}" class="back-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+        </svg>
+        Back to Bookings
+    </a>
+
+    <div class="page-title">
+        <h1 class="text-4xl font-bold gradient-text">Your Tickets</h1>
+    </div>
+
+    {% if tickets %}
+    <div class="booking-summary">
+        <div class="summary-header">
+            <div class="bus-details">
+                <span class="bus-name">{{ tickets.0.booking.bus.name }}</span>
+                <span class="booking-id">Booking ID: {{ tickets.0.booking.id }}</span>
+            </div>
+            <div class="status-badge {% if tickets.0.booking.ticket_status == 'Cancelled' %}status-cancelled{% else %}status-active{% endif %}">
+                {{ tickets.0.booking.ticket_status|default:"Active" }}
+            </div>
+        </div>
+        
+        <div class="journey-details">
+            <div class="detail-item">
+                <span class="detail-label">From</span>
+                <span class="detail-value">{{ tickets.0.booking.from_city }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">To</span>
+                <span class="detail-value">{{ tickets.0.booking.to_city }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Date</span>
+                <span class="detail-value">{{ tickets.0.booking.journey_date|date:"F d, Y" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Time</span>
+                <span class="detail-value">{{ tickets.0.booking.journey_date|time:"H:i" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Total Fare</span>
+                <span class="detail-value">₹{{ tickets.0.booking.total_fare }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tickets-grid">
+        {% for ticket in tickets %}
+        <div class="ticket-card">
+            <div class="ticket-header">
+                <div>
+                    <div class="passenger-name">{{ ticket.name }}</div>
+                    <div class="ticket-age">{{ ticket.age }} years</div>
+                </div>
+                <div>
+                    <div class="status-badge {% if ticket.ticket_payment %}status-active{% else %}status-cancelled{% endif %}">
+                        {{ ticket.ticket_payment|yesno:"Paid,Unpaid" }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="perforated-line perforated-line-top"></div>
+            
+            <div class="ticket-details">
+                <div class="ticket-row">
+                    <span class="ticket-label">Seat Type</span>
+                    <span class="ticket-value">{{ ticket.seat_type }}</span>
+                </div>
+                <div class="ticket-row">
+                    <span class="ticket-label">AC/Non-AC</span>
+                    <span class="ticket-value">{{ ticket.conditioning }}</span>
+                </div>
+                <div class="ticket-row">
+                    <span class="ticket-label">Ticket ID</span>
+                    <span class="ticket-value">{{ ticket.id }}</span>
+                </div>
+                
+                <div class="barcode">
+                    <img src="https://www.barcodesinc.com/generator/image.php?code={{ ticket.id }}&style=197&type=C128B&width=250&height=50&xres=1&font=3" alt="Barcode">
+                </div>
+            </div>
+            
+            <div class="ticket-footer">
+                Please arrive at least 15 minutes before departure time
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">🎫</div>
+        <h3>No tickets found</h3>
+        <p>This booking doesn't have any tickets or you don't have permission to view them.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}
