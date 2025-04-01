@@ -65,6 +65,11 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f"{self.bus.name} - {self.city} ({self.day})"
+    
+    def save(self, *args, **kwargs):
+        if self.seats is None:
+            self.seats = self.bus.capacity
+        super().save(*args, **kwargs)
 
 class Journey(models.Model):
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)

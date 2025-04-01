@@ -11,39 +11,26 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-import os
-from dotenv import load_dotenv
-
+from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-env_path = os.path.join(BASE_DIR, '.env.dev')
-load_dotenv(env_path)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = config('SECRET_KEY')
 # SECRET_KEY=None
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG',default = 0)
+DEBUG = config('DEBUG',cast = bool,default = False)
 
-allowed_hosts = os.getenv('ALLOWED_HOSTS').split(',')
-if allowed_hosts:
-    ALLOWED_HOSTS = allowed_hosts
-else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
-# Handle CSRF_TRUSTED_ORIGINS safely
-csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS').split(',')
-if csrf_origins:
-    CSRF_TRUSTED_ORIGINS = csrf_origins
-else:
-    CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+ALLOWED_HOSTS = []
 
 
 # Application definition
-SITE_ID = 2
+SITE_ID = 1
 
 INSTALLED_APPS = [
     "bus_booking.apps.BusBookingConfig",
@@ -112,11 +99,11 @@ WSGI_APPLICATION = "server.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv('DATABASE_NAME'),
-        "USER": os.getenv('DATABASE_USER'),
-        "PASSWORD": os.getenv('DATABASE_PASSWORD'),
-        "HOST": os.getenv('DATABASE_HOST', 'db'),
-        "PORT": os.getenv('DATABASE_PORT', '5432'),
+        "NAME": "busdj",
+        "USER": config('DATABASE_USER'),
+        "PASSWORD": config('DATABASE_PASSWORD'),
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
     }
 }
 
@@ -156,7 +143,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -178,5 +164,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') 
-EMAIL_HOST_PASSWORD = os.getenv('APP_PWD')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER') 
+EMAIL_HOST_PASSWORD = config('APP_PWD')
