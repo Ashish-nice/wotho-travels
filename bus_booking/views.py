@@ -18,8 +18,8 @@ def home(request):
 class RouteParamsMixin:
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.from_city = request.GET.get('from_city')
-        self.to_city = request.GET.get('to_city')
+        self.from_city = request.GET.get('from_city').lower()
+        self.to_city = request.GET.get('to_city').lower()
         self.date = request.GET.get('date')
 
     def get_context_data(self, **kwargs):
