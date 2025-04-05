@@ -445,3 +445,8 @@ class TicketView(LoginRequiredMixin, ListView):
                 return Ticket.objects.none()
         else:
             return Ticket.objects.none()
+
+def city_autocomplete(request):
+    term = request.GET.get('term', '')
+    cities = City.objects.filter(name__icontains=term).values_list('name', flat=True)[:10]
+    return JsonResponse(list(cities), safe=False)

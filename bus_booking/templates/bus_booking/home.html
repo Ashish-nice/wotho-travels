@@ -88,7 +88,36 @@
         border: 1px solid #BFDBFE;
         font-weight: 500;
     }
+    /* Autocomplete styles */
+    .ui-autocomplete {
+        max-height: 200px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 9999;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        border: 1px solid #e5e7eb;
+    }
+    .ui-menu-item {
+        padding: 8px 10px;
+        cursor: pointer;
+    }
+    .ui-menu-item:hover {
+        background-color: #f3f4f6;
+    }
+    .ui-state-active {
+        background-color: #FF3D00 !important;
+        color: white !important;
+        border: none !important;
+        margin: 0 !important;
+    }
 </style>
+
+<!-- Add jQuery and jQuery UI -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
 <div class="page-container">
     {% if messages %}
@@ -111,12 +140,12 @@
             <form method="GET" action="{% url 'bus_list' %}">
                 <div class="input-group">
                     <label for="from">From</label>
-                    <input type="text" name="from_city" id="from" required placeholder="Departure City">
+                    <input type="text" name="from_city" id="from" required placeholder="Departure City" class="city-autocomplete">
                 </div>
                 
                 <div class="input-group">
                     <label for="to">To</label>
-                    <input type="text" name="to_city" id="to" required placeholder="Destination City">
+                    <input type="text" name="to_city" id="to" required placeholder="Destination City" class="city-autocomplete">
                 </div>
                 
                 <div class="input-group">
@@ -150,6 +179,26 @@
                 this.value = minDate;
                 alert('Please select today or a future date');
             }
+        });
+    });
+    
+    // City autocomplete
+    $(document).ready(function() {
+        $(".city-autocomplete").autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: "{% url 'city_autocomplete' %}",
+                    dataType: "json",
+                    data: {
+                        term: request.term
+                    },
+                    success: function(data) {
+                        response(data);
+                    }
+                });
+            },
+            minLength: 2,
+            delay: 300
         });
     });
 </script>

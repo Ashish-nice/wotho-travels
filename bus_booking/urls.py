@@ -13,4 +13,5 @@ urlpatterns = [
     path("tickets/<int:booking_id>/", views.TicketView.as_view(), name='tickets'),
     path("cancel-booking/<int:booking_id>/", views.cancel_booking, name='cancel_booking'),
     path("transaction-success/", views.transaction_success, name='transaction_success'),
+    path('city-autocomplete/', views.city_autocomplete, name='city_autocomplete'),
 ]
