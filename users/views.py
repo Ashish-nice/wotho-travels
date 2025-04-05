@@ -19,7 +19,7 @@ def send_verification_email(user, request):
     subject = 'Activate Your Account'
     message = render_to_string('email_verification.html', {
         'user': user,
-        'domain': current_site.domain,
+        'domain': getattr(current_site, 'domain', 'wotho-travels.xtasi.me'),
         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
         'token': account_activation_token.make_token(user),
     })
