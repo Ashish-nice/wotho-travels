@@ -49,8 +49,8 @@ def send_verification_email(user, request):
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             
-            # Send email
-            server.send_message(msg)
+            # Send email using sendmail instead of send_message
+            server.sendmail(settings.EMAIL_HOST_USER, user.email, msg.as_string())
         
         print(f"Verification email sent successfully to {user.email}")
         return True
