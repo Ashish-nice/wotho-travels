@@ -3,13 +3,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    command: gunicorn server.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn wotho_travels.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - static_volume:/home/app/web/staticfiles
     expose:
       - 8000
     env_file:
       - ./.env.prod
+    environment:
+      - DATABASE=postgres
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
     depends_on:
       - db
   db:
@@ -17,7 +21,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ./.env.prod.db
+      - ./.env.prod
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_NAME}
   nginx:
     build: ./nginx
     volumes:

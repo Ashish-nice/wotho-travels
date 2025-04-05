@@ -56,13 +56,16 @@ COPY --from=builder /usr/src/app/requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache /wheels/*
 
-# copy entrypoint.prod.sh and fix line endings
+# copy entrypoint.prod.sh first and fix its permissions
 COPY ./entrypoint.prod.sh $APP_HOME/
 RUN dos2unix $APP_HOME/entrypoint.prod.sh
 RUN chmod +x $APP_HOME/entrypoint.prod.sh
 
-# copy project
+# copy project (after setting entrypoint permissions)
 COPY . $APP_HOME
+
+# make sure entrypoint is executable again (in case the COPY . overwrote it)
+RUN chmod +x $APP_HOME/entrypoint.prod.sh
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
@@ -70,5 +73,5 @@ RUN chown -R app:app $APP_HOME
 # change to the app user
 USER app
 
-# run entrypoint.prod.sh
-ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]
+# run entrypoint.prod.sh (use sh explicitly instead of relying on file execution)
+ENTRYPOINT ["sh", "/home/app/web/entrypoint.prod.sh"]
