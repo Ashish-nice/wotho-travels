@@ -29,9 +29,12 @@ def send_verification_email(user, request):
     email.attach_alternative(message, "text/html")
     print("Email made")
     print(domain)
-    email.send()
-    print("Email sent")
-
+    try:
+        email.send()
+        print("Email sent")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        raise e
 def activate_account(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
@@ -59,7 +62,7 @@ def sign_up(request):
                 user.is_active = False
                 user.save()
                 try:
-                    send_verification_email(user, request)
+                    Thread(target=send_verification_email, args=(user, request)).start()
                     messages.success(request, "Please verify your mail to activate your account")
                 except Exception as e:
                     user.delete()
