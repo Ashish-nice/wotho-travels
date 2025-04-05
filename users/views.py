@@ -9,6 +9,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import EmailMultiAlternatives
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from threading import Thread
 from .tokens import account_activation_token
 from django.conf import settings
 
