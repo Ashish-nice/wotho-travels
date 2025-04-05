@@ -29,13 +29,12 @@ def send_booking_otp(email, otp):
         # Add body to email
         msg.attach(MIMEText(message_text, 'plain'))
         
-        # Connect directly to Gmail's SSL port
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-        
-        # Send email
-        server.send_message(msg)
-        server.quit()
+        # Connect directly to Gmail's SSL port using with statement for proper cleanup
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            
+            # Send email
+            server.send_message(msg)
         
         print(f"OTP email sent successfully to {email}")
         return True
