@@ -43,14 +43,14 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20">
                 <div class="flex space-x-8 items-center">
-                    <a href="/main" class="text-3xl font-bold gradient-text hover:scale-105 transition-all duration-200">
+                    <a href="{% url 'home' %}" class="text-3xl font-bold gradient-text hover:scale-105 transition-all duration-200">
                         Wotho Travels
                     </a>
                 </div>
                 <div class="flex items-center space-x-6">
                     {% if user.is_authenticated %}
-                     <a href="/main/bookings/" class="text-gray-800 hover:text-[#FF3D00] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">Bookings</a>
-                    <a href="/profile" class="text-gray-800 hover:text-[#FF3D00] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">Profile</a>
+                    <a href="{% url 'bookings' %}" class="text-gray-800 hover:text-[#FF3D00] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">Bookings</a>
+                    <a href="{% url 'profile' %}" class="text-gray-800 hover:text-[#FF3D00] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">Profile</a>
                     <form method="POST" action="{% url 'logout' %}">
                         {% csrf_token %}
                         <button type="submit" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">
@@ -58,12 +58,8 @@
                         </button>
                     </form>
                     {% else %}
-                    <a href="/login" class="btn-secondary px-8 py-3 rounded-full text-sm font-medium">
-                        Login
-                    </a>
-                    <a href="/sign-up" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">
-                        Sign Up
-                    </a>
+                    <a href="{% url 'login' %}" class="btn-secondary px-8 py-3 rounded-full text-sm font-medium">Login</a>
+                    <a href="{% url 'sign_up' %}" class="btn-primary text-white px-8 py-3 rounded-full text-sm font-medium">Sign Up</a>
                     {% endif %}
                 </div>
             </div>
