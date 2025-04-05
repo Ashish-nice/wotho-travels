@@ -174,9 +174,12 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_LOGIN_METHODS = {'email'}
 
+# Email configuration 
+# Using direct SMTP_SSL connection to bypass port restrictions
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER') 
+EMAIL_PORT = 465  # Changed from 587 to 465 for SSL
+EMAIL_USE_TLS = False  # Turn off TLS since we're using SSL
+EMAIL_USE_SSL = True   # Use SSL instead
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('APP_PWD')

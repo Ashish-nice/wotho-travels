@@ -1,6 +1,8 @@
 import pyotp
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
-from django.core.mail import send_mail
 from django.conf import settings
 
 def generate_otp():
@@ -9,23 +11,34 @@ def generate_otp():
 
 def send_booking_otp(email, otp):
     subject = 'Verify your booking'
-    message = f'''
+    message_text = f'''
     Your OTP for booking verification is: {otp}
     
     This OTP will expire in 5 minutes.
     
     If you didn't request this, please ignore this email.
     '''
+    
     try:
-        send_mail(
-            subject,
-            message,
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
-        )
+        # Create a multipart message
+        msg = MIMEMultipart()
+        msg['From'] = settings.EMAIL_HOST_USER
+        msg['To'] = email
+        msg['Subject'] = subject
+        
+        # Add body to email
+        msg.attach(MIMEText(message_text, 'plain'))
+        
+        # Connect directly to Gmail's SSL port
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+        
+        # Send email
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"OTP email sent successfully to {email}")
         return True
     except Exception as e:
         print(f"Failed to send email: {e}")
         return False
-    

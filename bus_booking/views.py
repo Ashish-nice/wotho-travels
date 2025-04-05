@@ -317,14 +317,23 @@ def resend_otp(request):
             # Generate new OTP
             new_otp = generate_otp()
             booking_data['otp'] = new_otp
+            booking_data['otp_date_time'] = datetime.now().timestamp()  # Reset timer
             request.session['booking_data'] = booking_data
             
-            # In a real application, send this new OTP to user's email or phone
-            return JsonResponse({
-                'success': True, 
-                'message': 'OTP has been resent to your email',
-                'otp': new_otp  # In production, remove this
-            })
+            # Send OTP via our secure email method
+            email_sent = send_booking_otp(request.user.email, new_otp)
+            
+            if email_sent:
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'OTP has been resent to your email',
+                    'otp': new_otp  # In production, remove this
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Failed to send OTP email. Please try again.'
+                })
     
     return JsonResponse({'success': False, 'message': 'Error resending OTP'})
 

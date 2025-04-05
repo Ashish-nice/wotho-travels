@@ -12,6 +12,9 @@ from django.contrib.auth import get_user_model
 from threading import Thread
 from .tokens import account_activation_token
 from django.conf import settings
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 User = get_user_model()
 
@@ -19,22 +22,43 @@ def send_verification_email(user, request):
     current_site = get_current_site(request)
     subject = 'Activate Your Account'
     domain = getattr(current_site, 'domain', 'wotho-travels.xtasi.me')
-    message = render_to_string('email_verification.html', {
+    
+    # Create HTML message content
+    html_content = render_to_string('email_verification.html', {
         'user': user,
         'domain': domain,
         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
         'token': account_activation_token.make_token(user),
     })
-    email = EmailMultiAlternatives(subject, body=None, from_email=settings.EMAIL_HOST_USER, to=[user.email])
-    email.attach_alternative(message, "text/html")
-    print("Email made")
-    print(domain)
+    
     try:
-        email.send()
-        print("Email sent")
+        # Create a multipart message
+        msg = MIMEMultipart('alternative')
+        msg['From'] = settings.EMAIL_HOST_USER
+        msg['To'] = user.email
+        msg['Subject'] = subject
+        
+        # Attach both plain text and HTML versions
+        text_part = MIMEText('Please activate your account by clicking the link in this email.', 'plain')
+        html_part = MIMEText(html_content, 'html')
+        
+        msg.attach(text_part)
+        msg.attach(html_part)
+        
+        # Connect directly to Gmail's SSL port
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+        
+        # Send email
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"Verification email sent successfully to {user.email}")
+        return True
     except Exception as e:
         print(f"Error sending email: {e}")
-        raise e
+        return False
+
 def activate_account(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
