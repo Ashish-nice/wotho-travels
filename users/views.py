@@ -30,15 +30,24 @@ def send_verification_email(user, request):
     })
     
     try:
-        # Setup Mailjet client
-        mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
+        # Debug information for API keys (will be logged but hidden for security)
+        api_key = settings.MAILJET_API_KEY
+        api_secret = settings.MAILJET_API_SECRET
+        from_email = settings.MAILJET_SENDER
+        
+        print(f"API Key present: {'Yes' if api_key else 'No'}")
+        print(f"API Secret present: {'Yes' if api_secret else 'No'}")
+        print(f"From Email: {from_email}")
+        
+        # Setup Mailjet client with explicit API version
+        mailjet = Client(auth=(api_key, api_secret), version='v3.1')
         
         # Prepare data for Mailjet API
         data = {
             'Messages': [
                 {
                     'From': {
-                        'Email': settings.EMAIL_HOST_USER,
+                        'Email': from_email,
                         'Name': 'Wotho Travels'
                     },
                     'To': [
@@ -62,6 +71,8 @@ def send_verification_email(user, request):
             return True
         else:
             print(f"Error sending email via Mailjet: {result.reason}")
+            print(f"Response status code: {result.status_code}")
+            print(f"Response details: {result.json()}")
             return False
     except Exception as e:
         print(f"Error sending email: {e}")
