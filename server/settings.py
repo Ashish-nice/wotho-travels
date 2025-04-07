@@ -32,14 +32,14 @@ allowed_hosts = os.getenv('ALLOWED_HOSTS').split(',')
 if allowed_hosts:
     ALLOWED_HOSTS = allowed_hosts
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1','wotho-travels.xtasi.me']
 
 # Handle CSRF_TRUSTED_ORIGINS safely
 csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS').split(',')
 if csrf_origins:
     CSRF_TRUSTED_ORIGINS = csrf_origins
 else:
-    CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000','https://wotho-travels.xtasi.me']
 
 
 # Application definition
@@ -183,3 +183,7 @@ EMAIL_USE_TLS = False  # Turn off TLS since we're using SSL
 EMAIL_USE_SSL = True   # Use SSL instead
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('APP_PWD')
+
+MAILJET_API_KEY = os.getenv('MAILJET_API_KEY')
+MAILJET_API_SECRET = os.getenv('MAILJET_API_SECRET')
+MAILJET_SENFER = os.getenv('MAILJET_SENDER')

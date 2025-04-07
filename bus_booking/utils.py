@@ -1,9 +1,7 @@
 import pyotp
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 from django.conf import settings
+from mailjet_rest import Client
 
 def generate_otp():
     totp = pyotp.TOTP(pyotp.random_base32(), interval=300)
@@ -20,24 +18,38 @@ def send_booking_otp(email, otp):
     '''
     
     try:
-        # Create a multipart message
-        msg = MIMEMultipart()
-        msg['From'] = settings.EMAIL_HOST_USER
-        msg['To'] = email
-        msg['Subject'] = subject
+        # Setup Mailjet client
+        mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
         
-        # Add body to email
-        msg.attach(MIMEText(message_text, 'plain'))
+        # Prepare data for Mailjet API
+        data = {
+            'Messages': [
+                {
+                    'From': {
+                        'Email': settings.EMAIL_HOST_USER,
+                        'Name': 'Wotho Travels'
+                    },
+                    'To': [
+                        {
+                            'Email': email,
+                            'Name': 'Traveler'
+                        }
+                    ],
+                    'Subject': subject,
+                    'TextPart': message_text,
+                }
+            ]
+        }
         
-        # Connect directly to Gmail's SSL port using with statement for proper cleanup
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            
-            # Send email
-            server.send_message(msg)
+        # Send email using Mailjet
+        result = mailjet.send.create(data=data)
         
-        print(f"OTP email sent successfully to {email}")
-        return True
+        if result.status_code == 200:
+            print(f"OTP email sent successfully to {email}")
+            return True
+        else:
+            print(f"Error sending email via Mailjet: {result.reason}")
+            return False
     except Exception as e:
         print(f"Failed to send email: {e}")
         return False

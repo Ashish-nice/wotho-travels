@@ -12,9 +12,7 @@ from django.contrib.auth import get_user_model
 from threading import Thread
 from .tokens import account_activation_token
 from django.conf import settings
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from mailjet_rest import Client
 
 User = get_user_model()
 
@@ -32,28 +30,39 @@ def send_verification_email(user, request):
     })
     
     try:
-        # Create a multipart message
-        msg = MIMEMultipart('alternative')
-        msg['From'] = settings.EMAIL_HOST_USER
-        msg['To'] = user.email
-        msg['Subject'] = subject
+        # Setup Mailjet client
+        mailjet = Client(auth=(settings.MAILJET_API_KEY, settings.MAILJET_API_SECRET), version='v3.1')
         
-        # Attach both plain text and HTML versions
-        text_part = MIMEText('Please activate your account by clicking the link in this email.', 'plain')
-        html_part = MIMEText(html_content, 'html')
+        # Prepare data for Mailjet API
+        data = {
+            'Messages': [
+                {
+                    'From': {
+                        'Email': settings.EMAIL_HOST_USER,
+                        'Name': 'Wotho Travels'
+                    },
+                    'To': [
+                        {
+                            'Email': user.email,
+                            'Name': user.username
+                        }
+                    ],
+                    'Subject': subject,
+                    'TextPart': 'Please activate your account by clicking the link in this email.',
+                    'HTMLPart': html_content
+                }
+            ]
+        }
         
-        msg.attach(text_part)
-        msg.attach(html_part)
+        # Send email using Mailjet
+        result = mailjet.send.create(data=data)
         
-        # Connect directly to Gmail's SSL port using with statement for proper cleanup
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            
-            # Send email using sendmail instead of send_message
-            server.sendmail(settings.EMAIL_HOST_USER, user.email, msg.as_string())
-        
-        print(f"Verification email sent successfully to {user.email}")
-        return True
+        if result.status_code == 200:
+            print(f"Verification email sent successfully to {user.email}")
+            return True
+        else:
+            print(f"Error sending email via Mailjet: {result.reason}")
+            return False
     except Exception as e:
         print(f"Error sending email: {e}")
         return False
