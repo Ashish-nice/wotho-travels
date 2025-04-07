@@ -24,8 +24,7 @@ services:
     build: ./nginx
     volumes:
       - static_volume:/home/app/web/staticfiles
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     ports:
       - 80:80
       - 443:443
