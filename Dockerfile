@@ -32,4 +32,4 @@ RUN chmod +x /usr/src/app/entrypoint.sh
 COPY . .
 
 # run entrypoint.sh
-CMD bash /usr/src/app/entrypoint.sh
+ENTRYPOINT ["sh", "/home/app/web/entrypoint.sh"]
