@@ -217,7 +217,7 @@
 </head>
 <body>
     <!-- Sidebar -->
-    {% navbar %}
+    {% block navbar %}
     <div class="sidebar" id="sidebar">
         <div class="logo-container">
             <a href="{% url 'bus_admin_dashboard' %}" class="logo">
@@ -312,7 +312,7 @@
             </ul>
         </div>
     </div>
-    {% endnavbar %}
+    {% endblock navbar %}
     <!-- Main Content -->
     <div class="main-content" id="main-content">
         <div class="top-navbar">
@@ -338,7 +338,7 @@
                 </ul>
             </div>
         </div>
-        
+
         <div class="content-card">
             {% block content %}{% endblock %}
         </div>
