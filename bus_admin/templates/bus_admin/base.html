@@ -1,0 +1,395 @@
+<!-- filepath: d:\Ashish\Coding\DVM\wotho-travels\bus_admin\templates\bus_admin\base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Wotho Travels Admin{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .sidebar-collapsed {
+            margin-left: -250px;
+        }
+        
+        .logo-container {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 5px;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 5px;
+            padding: 12px 20px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .dropdown-menu {
+            background-color: var(--secondary-color);
+            border: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .dropdown-item {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .dropdown-item:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        
+        .main-content-expanded {
+            margin-left: 0;
+        }
+        
+        .top-navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .user-dropdown {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .content-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .breadcrumb-container {
+            margin-bottom: 20px;
+        }
+        
+        .breadcrumb {
+            padding: 10px 15px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #6c757d;
+            margin-top: auto;
+        }
+        
+        /* Animation for notifications */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            
+            .sidebar-active {
+                margin-left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo-container">
+            <a href="{% url 'bus_admin:dashboard' %}" class="logo">
+                <i class="fas fa-bus"></i> Wotho Travels
+            </a>
+        </div>
+        
+        <div class="p-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{% url 'bus_admin:dashboard' %}" class="nav-link {% if request.path == '/admin/dashboard/' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                
+                <!-- Buses Menu -->
+                <li class="nav-item">
+                    <a href="#busSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle">
+                        <i class="fas fa-bus"></i> Buses
+                    </a>
+                    <ul class="collapse list-unstyled ms-4" id="busSubmenu">
+                        <li>
+                            <a href="{% url 'bus_admin:bus_list' %}" class="nav-link">
+                                <i class="fas fa-list"></i> All Buses
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'bus_admin:bus_create' %}" class="nav-link">
+                                <i class="fas fa-plus"></i> Add New Bus
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'bus_admin:route_list' %}" class="nav-link">
+                                <i class="fas fa-route"></i> Routes
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'bus_admin:schedule_list' %}" class="nav-link">
+                                <i class="fas fa-calendar-alt"></i> Schedules
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- Bookings Menu -->
+                <li class="nav-item">
+                    <a href="#bookingSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle">
+                        <i class="fas fa-ticket-alt"></i> Bookings
+                        <span class="notification-badge">5</span>
+                    </a>
+                    <ul class="collapse list-unstyled ms-4" id="bookingSubmenu">
+                        <li>
+                            <a href="{% url 'bus_admin:booking_list' %}" class="nav-link">
+                                <i class="fas fa-list"></i> All Bookings
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'bus_admin:booking_new' %}" class="nav-link">
+                                <i class="fas fa-file-alt"></i> New Bookings
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'bus_admin:booking_confirmed' %}" class="nav-link">
+                                <i class="fas fa-check-circle"></i> Confirmed
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'bus_admin:booking_cancelled' %}" class="nav-link">
+                                <i class="fas fa-ban"></i> Cancelled
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="{% url 'bus_admin:reports' %}" class="nav-link">
+                        <i class="fas fa-chart-line"></i> Reports
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="{% url 'bus_admin:settings' %}" class="nav-link">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="{% url 'bus_admin:logout' %}" class="nav-link">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <div class="top-navbar">
+            <button class="toggle-sidebar" id="toggle-sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="user-dropdown dropdown">
+                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="user-avatar">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <div class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <small class="text-muted">Administrator</small>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                    <li><a class="dropdown-item" href="#">Account Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'bus_admin:logout' %}">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="breadcrumb-container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'bus_admin:dashboard' %}">Home</a></li>
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
+        </div>
+        
+        <div class="content-card">
+            {% block content %}{% endblock %}
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2025 Wotho Travels. All rights reserved.</p>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('toggle-sidebar');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            
+            toggleButton.addEventListener('click', function() {
+                sidebar.classList.toggle('sidebar-collapsed');
+                mainContent.classList.toggle('main-content-expanded');
+            });
+            
+            // On small screens, collapse sidebar by default
+            function checkWidth() {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('sidebar-collapsed');
+                    mainContent.classList.add('main-content-expanded');
+                } else {
+                    sidebar.classList.remove('sidebar-collapsed');
+                    mainContent.classList.remove('main-content-expanded');
+                }
+            }
+            
+            // Initial check
+            checkWidth();
+            
+            // Check on resize
+            window.addEventListener('resize', checkWidth);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
