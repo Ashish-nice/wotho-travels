@@ -48,6 +48,7 @@ SITE_ID = 2
 INSTALLED_APPS = [
     "bus_booking.apps.BusBookingConfig",
     "users.apps.UsersConfig",
+    "bus_admin.apps.BusAdminConfig",
     "crispy_forms",
     "crispy_bootstrap4",
     "django.contrib.admin",
@@ -62,7 +63,6 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
