@@ -219,7 +219,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="logo-container">
-            <a href="{% url 'bus_admin:dashboard' %}" class="logo">
+            <a href="{% url 'bus_admin_dashboard' %}" class="logo">
                 <i class="fas fa-bus"></i> Wotho Travels
             </a>
         </div>
@@ -227,7 +227,7 @@
         <div class="p-3">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a href="{% url 'bus_admin:dashboard' %}" class="nav-link {% if request.path == '/admin/dashboard/' %}active{% endif %}">
+                    <a href="{% url 'bus_admin_dashboard' %}" class="nav-link {% if request.path == '/bus-admin/dashboard/' %}active{% endif %}">
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
                 </li>
@@ -239,22 +239,22 @@
                     </a>
                     <ul class="collapse list-unstyled ms-4" id="busSubmenu">
                         <li>
-                            <a href="{% url 'bus_admin:bus_list' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-list"></i> All Buses
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'bus_admin:bus_create' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-plus"></i> Add New Bus
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'bus_admin:route_list' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-route"></i> Routes
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'bus_admin:schedule_list' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-calendar-alt"></i> Schedules
                             </a>
                         </li>
@@ -269,22 +269,22 @@
                     </a>
                     <ul class="collapse list-unstyled ms-4" id="bookingSubmenu">
                         <li>
-                            <a href="{% url 'bus_admin:booking_list' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-list"></i> All Bookings
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'bus_admin:booking_new' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-file-alt"></i> New Bookings
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'bus_admin:booking_confirmed' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-check-circle"></i> Confirmed
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'bus_admin:booking_cancelled' %}" class="nav-link">
+                            <a href="#" class="nav-link">
                                 <i class="fas fa-ban"></i> Cancelled
                             </a>
                         </li>
@@ -292,19 +292,19 @@
                 </li>
                 
                 <li class="nav-item">
-                    <a href="{% url 'bus_admin:reports' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-chart-line"></i> Reports
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a href="{% url 'bus_admin:settings' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-cog"></i> Settings
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a href="{% url 'bus_admin:logout' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </li>
