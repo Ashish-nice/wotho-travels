@@ -217,6 +217,7 @@
 </head>
 <body>
     <!-- Sidebar -->
+    {% navbar %}
     <div class="sidebar" id="sidebar">
         <div class="logo-container">
             <a href="{% url 'bus_admin_dashboard' %}" class="logo">
@@ -311,7 +312,7 @@
             </ul>
         </div>
     </div>
-
+    {% endnavbar %}
     <!-- Main Content -->
     <div class="main-content" id="main-content">
         <div class="top-navbar">
