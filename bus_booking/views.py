@@ -36,9 +36,14 @@ class BusListView(RouteParamsMixin, ListView):
     length = 0
 
     def get_queryset(self):
+        if self.from_city == self.to_city:
+            return Bus.objects.none()
+        if datetime.strptime(self.date,'%Y-%m-%d').date() < datetime.now().date():
+            return Bus.objects.none()
         queryset = Bus.objects.all()
-        queryset = queryset.filter(schedule__city__name=self.from_city).all()
-        queryset = queryset.filter(schedule__city__name=self.to_city).all()
+        queryset = queryset.filter(schedule__city__name=self.from_city).filter(schedule__city__name=self.to_city)
+        if(datetime.strptime(self.date,'%Y-%m-%d').date()==datetime.now().date()):
+            queryset = queryset.filter(schedule__departure_time__gte=timezone.now().time())
         if self.date:
             date_obj = datetime.strptime(self.date,'%Y-%m-%d')
             day = date_obj.strftime('%A')
