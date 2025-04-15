@@ -363,13 +363,11 @@ def cancel_booking(request, booking_id):
                             profile.user_wallet += 0.75*booking.total_fare
                         else:
                             profile.user_wallet += booking.total_fare
-                        profile.save()  # Save the updated wallet amount
+                        profile.save()
                         bus = booking.bus
                         from_stop = bus.schedule_set.get(city=booking.from_city).stop_number
                         to_stop = bus.schedule_set.get(city=booking.to_city).stop_number
-                        # Get journey date
                         travel_date = booking.journey_date.date()
-                        # Update all journeys along the route
                         for i in range(from_stop, to_stop + 1):
                             schedule = bus.schedule_set.get(bus=bus,stop_number=i)
                             journey = Journey.objects.get(
@@ -378,7 +376,8 @@ def cancel_booking(request, booking_id):
                             )
                             journey.seats += booking.seats
                             journey.save()                                                
-                        booking.delete()
+                        booking.status = 'CANCELLED'
+                        booking.save()
                     return JsonResponse({
                         'success': True,
                         'message': 'Booking cancelled successfully, check your wallet for refunded amount'
@@ -431,11 +430,19 @@ class UserBookingsView(LoginRequiredMixin, ListView):
         current_time = timezone.now()
         context['upcoming_bookings'] = Booking.objects.filter(
             user=self.request.user.profile,
-            journey_date__gt=current_time
+            journey_date__gt=current_time,
+            status='BOOKED'  # Only active bookings
         ).order_by('journey_date')
+        
         context['past_bookings'] = Booking.objects.filter(
             user=self.request.user.profile,
-            journey_date__lte=current_time
+            journey_date__lte=current_time,
+            status='BOOKED'  # Only active bookings
+        ).order_by('-journey_date')
+        
+        context['cancelled_bookings'] = Booking.objects.filter(
+            user=self.request.user.profile,
+            status='CANCELLED'  # Only cancelled bookings
         ).order_by('-journey_date')
         
         return context

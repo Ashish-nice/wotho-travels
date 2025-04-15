@@ -140,3 +140,85 @@ class UpdateBusView(View):
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
         
+@method_decorator(group_required('bus_admin'), name='dispatch')
+class CancelBusView(View):
+    def post(self, request, bus_id, *args, **kwargs):
+        try:
+            bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
+            
+            # Parse request data - either from JSON body or POST data
+            if request.body:
+                try:
+                    data = json.loads(request.body)
+                except json.JSONDecodeError:
+                    data = {}
+            else:
+                data = request.POST
+                
+            # Default cancellation date is 7 days from now if not specified
+            cancel_date_str = data.get('cancel_date')
+            if cancel_date_str:
+                try:
+                    cancel_date = datetime.strptime(cancel_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    cancel_date = timezone.now().date() + timedelta(days=7)
+            else:
+                cancel_date = timezone.now().date() + timedelta(days=7)
+            
+            # Get all future bookings for this bus
+            future_bookings = Booking.objects.filter(
+                bus=bus,
+                journey_date__gte=timezone.now(),
+                booking_payment=True,
+                status='BOOKED'  # Only process active bookings
+            )
+            
+            refund_count = 0
+            with transaction.atomic():
+                for booking in future_bookings:
+                    # Refund the full amount to the user's wallet
+                    profile = booking.user
+                    profile.user_wallet += booking.total_fare
+                    profile.save()
+                    
+                    # Mark booking as cancelled
+                    booking.status = 'CANCELLED'
+                    booking.save()
+                    
+                    # Update seat availability in journeys
+                    from_stop = bus.schedule_set.get(city=booking.from_city).stop_number
+                    to_stop = bus.schedule_set.get(city=booking.to_city).stop_number
+                    travel_date = booking.journey_date.date()
+                    
+                    for i in range(from_stop, to_stop + 1):
+                        try:
+                            schedule = bus.schedule_set.get(stop_number=i)
+                            journey, created = Journey.objects.get_or_create(
+                                schedule=schedule,
+                                date=travel_date - timedelta(days=travel_date.isoweekday() % 7)
+                            )
+                            journey.seats += booking.seats
+                            journey.save()
+                        except Schedule.DoesNotExist:
+                            continue
+                    
+                    # Send notification to the user (could implement email service here)
+                    
+                    refund_count += 1
+                
+                # Mark the bus as inactive instead of deleting it
+                bus.is_active = False
+                bus.save()
+            
+            # Return success response that will work with the template's JavaScript
+            return JsonResponse({
+                'success': True,
+                'message': f'Bus cancelled successfully. {refund_count} bookings were refunded.',
+                'refund_count': refund_count,
+                'bus_id': bus.id
+            })
+            
+        except Exception as e:
+            # Log the exception details
+            print(f"Error cancelling bus: {str(e)}")
+            return JsonResponse({'success': False, 'message': f'Error cancelling bus: {str(e)}'}, status=500)

@@ -104,5 +104,5 @@ class Booking(models.Model):
     otp = models.CharField(max_length=6, null=True, blank=True)
     booking_date = models.DateTimeField(auto_now_add=True,null=True)
     booking_payment = models.BooleanField(default=False)
-    booking_status = models.CharField(max_length=10, choices=STATUS, default='BOOKED')
+    status = models.CharField(max_length=10, choices=STATUS, default='BOOKED')
 

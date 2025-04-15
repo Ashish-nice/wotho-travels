@@ -443,6 +443,66 @@
     {% else %}
     <div class="empty-state">No past journeys</div>
     {% endif %}
+    
+    <h2 class="section-title">Cancelled Bookings</h2>
+    {% if cancelled_bookings %}
+    <div class="bookings-grid" id="cancelled-bookings-grid">
+        {% for booking in cancelled_bookings %}
+        <div class="booking-card {% if forloop.counter > 2 %}hidden-booking{% endif %}">
+            <div class="booking-header">
+                <div>
+                    <h3 class="bus-name">{{ booking.bus.name }}</h3>
+                    <div class="status-badge status-cancelled">Cancelled</div>
+                </div>
+            </div>
+            
+            <div class="booking-info">
+                <div class="info-row">
+                    <span class="info-label">From:</span>
+                    <span class="info-value">{{ booking.from_city }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">To:</span>
+                    <span class="info-value">{{ booking.to_city }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span class="info-value">{{ booking.journey_date|date:"F d, Y" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Time:</span>
+                    <span class="info-value">{{ booking.journey_date|time:"H:i" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Seats:</span>
+                    <span class="info-value">{{ booking.seats }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fare:</span>
+                    <span class="info-value">₹{{ booking.total_fare }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Cancelled:</span>
+                    <span class="info-value">{{ booking.booking_date|date:"F d, Y" }}</span>
+                </div>
+            </div>
+
+            <div class="booking-footer">
+                <a href="{% url 'tickets' booking.id %}" class="view-tickets-btn">View Tickets</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if cancelled_bookings.count > 2 %}
+    <div class="view-more-container">
+        <button id="view-more-cancelled" class="view-more-btn">View More Cancelled Bookings</button>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="empty-state">No cancelled bookings</div>
+    {% endif %}
 </div>
 
 <!-- Cancellation Modal -->
@@ -484,6 +544,7 @@
 
         const viewMoreUpcomingBtn = document.getElementById('view-more-upcoming');
         const viewMorePastBtn = document.getElementById('view-more-past');
+        const viewMoreCancelledBtn = document.getElementById('view-more-cancelled');
         
         if (viewMoreUpcomingBtn) {
             viewMoreUpcomingBtn.addEventListener('click', function() {
@@ -498,6 +559,16 @@
         if (viewMorePastBtn) {
             viewMorePastBtn.addEventListener('click', function() {
                 const hiddenBookings = document.querySelectorAll('#past-bookings-grid .hidden-booking');
+                hiddenBookings.forEach(booking => {
+                    booking.classList.remove('hidden-booking');
+                });
+                this.style.display = 'none';
+            });
+        }
+        
+        if (viewMoreCancelledBtn) {
+            viewMoreCancelledBtn.addEventListener('click', function() {
+                const hiddenBookings = document.querySelectorAll('#cancelled-bookings-grid .hidden-booking');
                 hiddenBookings.forEach(booking => {
                     booking.classList.remove('hidden-booking');
                 });
