@@ -431,7 +431,7 @@ class UserBookingsView(LoginRequiredMixin, ListView):
         context['upcoming_bookings'] = Booking.objects.filter(
             user=self.request.user.profile,
             journey_date__gt=current_time,
-            status='BOOKED'  # Only active bookings
+            status='BOOKED'
         ).order_by('journey_date')
         
         context['past_bookings'] = Booking.objects.filter(
