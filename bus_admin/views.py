@@ -108,3 +108,35 @@ class AddBusView(View):
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
+@method_decorator(group_required('bus_admin'), name='dispatch')
+class UpdateBusView(View):
+    def post(self, request, bus_id, *args, **kwargs):
+        try:
+            bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
+            data = json.loads(request.body)
+            
+            bus.name = data.get('name', bus.name)
+            bus.number = data.get('number', bus.number)
+            bus.capacity = int(data.get('capacity', bus.capacity))
+            bus.fare = float(data.get('fare', bus.fare))
+            bus.save()
+            schedules = data.get('schedules', [])
+
+            if schedules:
+                with transaction.atomic():
+                    Schedule.objects.filter(bus=bus).delete()
+                    for i, schedule in enumerate(schedules, 1):
+                        city, created = City.objects.get_or_create(name=schedule['city'])
+                        Schedule.objects.create(
+                            bus=bus,
+                            city=city,
+                            stop_number=i,
+                            arrival_time=schedule['arrivalTime'],
+                            departure_time=schedule['departureTime'],
+                            day=schedule['day']
+                        )
+            
+            return JsonResponse({'success': True, 'message': 'Bus updated successfully',})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        

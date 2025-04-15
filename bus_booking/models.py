@@ -21,6 +21,10 @@ CONDITIONING = [
     ('AC','AC'),
     ('Non-AC','Non-AC'),
     ]
+STATUS = [
+    ('BOOKED', 'Booked'),
+    ('CANCELLED', 'Cancelled'),
+]   
 
 class City(models.Model):
     name = models.CharField(max_length=50, primary_key=True)
@@ -89,12 +93,6 @@ class Ticket(models.Model):
         return f"{self.name} - {self.booking.bus.name}"
 
 class Booking(models.Model):
-    STATUS = [
-        ('BOOKED', 'Booked'),
-        ('CANCELLED', 'Cancelled'),
-        ('COMPLETED', 'Completed')
-    ]
-
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name="bookings", null=True)
@@ -106,4 +104,5 @@ class Booking(models.Model):
     otp = models.CharField(max_length=6, null=True, blank=True)
     booking_date = models.DateTimeField(auto_now_add=True,null=True)
     booking_payment = models.BooleanField(default=False)
+    booking_status = models.CharField(max_length=10, choices=STATUS, default='BOOKED')
 
