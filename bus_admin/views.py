@@ -145,26 +145,13 @@ class CancelBusView(View):
     def post(self, request, bus_id, *args, **kwargs):
         try:
             bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
-            
-            # Parse request data - either from JSON body or POST data
             if request.body:
                 try:
                     data = json.loads(request.body)
                 except json.JSONDecodeError:
                     data = {}
             else:
-                data = request.POST
-                
-            # Default cancellation date is 7 days from now if not specified
-            cancel_date_str = data.get('cancel_date')
-            if cancel_date_str:
-                try:
-                    cancel_date = datetime.strptime(cancel_date_str, '%Y-%m-%d').date()
-                except ValueError:
-                    cancel_date = timezone.now().date() + timedelta(days=7)
-            else:
-                cancel_date = timezone.now().date() + timedelta(days=7)
-            
+                data = request.POST           
             # Get all future bookings for this bus
             future_bookings = Booking.objects.filter(
                 bus=bus,
@@ -186,39 +173,71 @@ class CancelBusView(View):
                     booking.save()
                     
                     # Update seat availability in journeys
-                    from_stop = bus.schedule_set.get(city=booking.from_city).stop_number
-                    to_stop = bus.schedule_set.get(city=booking.to_city).stop_number
-                    travel_date = booking.journey_date.date()
-                    
-                    for i in range(from_stop, to_stop + 1):
-                        try:
-                            schedule = bus.schedule_set.get(stop_number=i)
-                            journey, created = Journey.objects.get_or_create(
-                                schedule=schedule,
-                                date=travel_date - timedelta(days=travel_date.isoweekday() % 7)
-                            )
-                            journey.seats += booking.seats
-                            journey.save()
-                        except Schedule.DoesNotExist:
-                            continue
-                    
-                    # Send notification to the user (could implement email service here)
+                    try:
+                        from_stop = bus.schedule_set.get(city=booking.from_city).stop_number
+                        to_stop = bus.schedule_set.get(city=booking.to_city).stop_number
+                        travel_date = booking.journey_date.date()
+                        
+                        for i in range(from_stop, to_stop + 1):
+                            try:
+                                schedule = bus.schedule_set.get(stop_number=i)
+                                journey, created = Journey.objects.get_or_create(
+                                    schedule=schedule,
+                                    date=travel_date
+                                )
+                                journey.seats += booking.seats
+                                journey.save()
+                            except Schedule.DoesNotExist:
+                                continue
+                    except Exception as e:
+                        print(f"Error updating journey for booking {booking.id}: {str(e)}")
+                        continue
                     
                     refund_count += 1
                 
-                # Mark the bus as inactive instead of deleting it
-                bus.is_active = False
-                bus.save()
+                # Delete the bus instead of just marking it inactive
+                bus_id = bus.id
+                bus_name = bus.name
+                bus.delete()
             
             # Return success response that will work with the template's JavaScript
             return JsonResponse({
                 'success': True,
-                'message': f'Bus cancelled successfully. {refund_count} bookings were refunded.',
+                'message': f'Bus "{bus_name}" deleted successfully. {refund_count} bookings were refunded.',
                 'refund_count': refund_count,
-                'bus_id': bus.id
+                'bus_id': bus_id
             })
             
         except Exception as e:
             # Log the exception details
             print(f"Error cancelling bus: {str(e)}")
             return JsonResponse({'success': False, 'message': f'Error cancelling bus: {str(e)}'}, status=500)
+
+@method_decorator(group_required('bus_admin'), name='dispatch')
+class GetBusScheduleView(View):
+    def get(self, request, bus_id, *args, **kwargs):
+        try:
+            bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
+            schedules = Schedule.objects.filter(bus=bus).order_by('stop_number')
+            
+            schedule_data = []
+            for schedule in schedules:
+                schedule_data.append({
+                    'stopNumber': schedule.stop_number,
+                    'city': schedule.city.name,
+                    'arrivalTime': schedule.arrival_time.strftime('%I:%M %p') if schedule.arrival_time else '',
+                    'departureTime': schedule.departure_time.strftime('%I:%M %p') if schedule.departure_time else '',
+                    'day': schedule.day
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'bus': {
+                    'id': bus.id,
+                    'name': bus.name,
+                    'number': bus.number
+                },
+                'schedules': schedule_data
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
