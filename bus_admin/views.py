@@ -30,20 +30,20 @@ class BusAdminLoginView(FormView):
 
     def form_valid(self, form):
         user = form.get_user()
-        if user.groups.filter(name='BusAdmin').exists():
+        if user.groups.filter(name='bus_admin').exists():
             return super().form_valid(form)
         else:
             messages.error(self.request, 'You are not authorized to access this section.')
             return render(self.request,'bus_admin/login.html', {'form': form})
         
-@method_decorator(group_required('BusAdmin'), name='dispatch')
+@method_decorator(group_required('bus_admin'), name='dispatch')
 class BusAdminDashboardView(View):
     template_name = 'bus_admin/dashboard.html'
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name)
 
-@method_decorator(group_required('BusAdmin'), name='dispatch')
+@method_decorator(group_required('bus_admin'), name='dispatch')
 class BusListView(ListView):
     template_name = 'bus_admin/bus_list.html'
     model = Bus
@@ -54,7 +54,7 @@ class BusListView(ListView):
         queryset = queryset.filter(manager=self.request.user)
         return queryset
     
-@method_decorator(group_required('BusAdmin'), name='dispatch')
+@method_decorator(group_required('bus_admin'), name='dispatch')
 class BookingListView(ListView):
     template_name = 'bus_admin/booking_list.html'
     model = Booking

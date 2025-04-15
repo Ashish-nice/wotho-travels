@@ -34,9 +34,9 @@ class City(models.Model):
 class Bus(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
-    manager = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='buses')
+    manager = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='buses',null=True, blank=True)
     number = models.CharField(max_length=50)
-    capacity = models.IntegerField()
+    capacity = models.IntegerField(null=True, blank=True)
     fare = models.IntegerField(null=True,blank=True)
     cities = models.ManyToManyField(City, through='Schedule', related_name="buses")
 
