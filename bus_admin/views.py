@@ -51,7 +51,7 @@ class BusListView(ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(manager=self.request.user)
+        queryset = queryset.filter(manager=self.request.user.profile)
         return queryset
     
 @method_decorator(group_required('bus_admin'), name='dispatch')
@@ -63,4 +63,4 @@ class BookingListView(ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter()
-        return Booking.objects.filter(bus__admin=self.request.user)
+        return Booking.objects.filter(bus__manager=self.request.user.profile)
