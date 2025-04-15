@@ -91,7 +91,6 @@ class AddBusView(View):
                 number=number,
                 capacity=int(capacity),
                 fare=float(fare),
-                description=description,
                 manager=request.user.profile
             )
             

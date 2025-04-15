@@ -228,11 +228,6 @@
                             <input type="number" class="form-control" id="busBaseFare" required min="0" step="0.01" placeholder="Base fare">
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="busDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="busDescription" rows="3" placeholder="Enter bus description"></textarea>
-                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -357,9 +352,6 @@
                 // Get fare from the detail-value (format is "₹XXX.XX")
                 const fareText = busCard.querySelectorAll('.detail-value')[2].textContent.trim();
                 document.getElementById('busBaseFare').value = fareText.replace('₹', '');
-                
-                // Description would be fetched from the backend in a real app
-                document.getElementById('busDescription').value = 'This is a sample description for demonstration.';
                 
                 busModalTitle.textContent = 'Edit Bus';
                 addBusModal.show();
