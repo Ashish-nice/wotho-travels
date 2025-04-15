@@ -4,6 +4,8 @@ from django.shortcuts import render
 from django.views.generic.edit import FormView
 from django.views import View
 from django.contrib import messages
+#Creating my own decorator to check if the user is in the BusAdmin group
+
 # Create your views here.
 class BusAdminLoginView(FormView):
     template_name = 'bus_admin/login.html'

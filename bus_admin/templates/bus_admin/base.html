@@ -325,10 +325,12 @@
                     <div class="user-avatar">
                         {{ request.user.username|first|upper }}
                     </div>
+                    {% if request.user.groups.all %}
                     <div>
                         <div class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</div>
                         <small class="text-muted">Administrator</small>
                     </div>
+                    {% endif %}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     <li><a class="dropdown-item" href="#">Profile</a></li>
