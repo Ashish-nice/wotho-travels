@@ -225,8 +225,8 @@ class GetBusScheduleView(View):
                 schedule_data.append({
                     'stopNumber': schedule.stop_number,
                     'city': schedule.city.name,
-                    'arrivalTime': schedule.arrival_time.strftime('%I:%M %p') if schedule.arrival_time else '',
-                    'departureTime': schedule.departure_time.strftime('%I:%M %p') if schedule.departure_time else '',
+                    'arrivalTime': schedule.arrival_time.strftime('%H:%M') if schedule.arrival_time else '',
+                    'departureTime': schedule.departure_time.strftime('%H:%M') if schedule.departure_time else '',
                     'day': schedule.day
                 })
             
@@ -235,9 +235,84 @@ class GetBusScheduleView(View):
                 'bus': {
                     'id': bus.id,
                     'name': bus.name,
-                    'number': bus.number
+                    'number': bus.number,
+                    'capacity': bus.capacity
                 },
                 'schedules': schedule_data
             })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@method_decorator(group_required('bus_admin'), name='dispatch')
+class UpdateBusScheduleView(View):
+    def post(self, request, bus_id, *args, **kwargs):
+        try:
+            bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
+            data = json.loads(request.body)
+            schedules = data.get('schedules', [])
+            
+            if not schedules:
+                return JsonResponse({'success': False, 'message': 'No schedule data provided'}, status=400)
+            
+            with transaction.atomic():
+                # Delete existing schedules for this bus
+                Schedule.objects.filter(bus=bus).delete()
+                
+                # Create new schedules based on the provided data
+                for i, schedule in enumerate(schedules, 1):
+                    city_name = schedule.get('city')
+                    if not city_name:
+                        continue
+                        
+                    city, created = City.objects.get_or_create(name=city_name)
+                    arrival_time = schedule.get('arrivalTime', '')
+                    departure_time = schedule.get('departureTime', '')
+                    day = schedule.get('day')
+                    
+                    if not day:
+                        continue
+                    
+                    Schedule.objects.create(
+                        bus=bus,
+                        city=city,
+                        stop_number=i,
+                        arrival_time=arrival_time if arrival_time else None,
+                        departure_time=departure_time if departure_time else None,
+                        day=day
+                    )
+                
+                # Create corresponding Journey entries to initialize seat counts
+                future_dates = []
+                today = timezone.now().date()
+                current_weekday = today.isoweekday() % 7  # Sunday = 0, Monday = 1, etc.
+                
+                # Generate dates for the next 30 days
+                for i in range(30):
+                    future_date = today + timedelta(days=i)
+                    future_dates.append(future_date)
+                
+                # Create Journey entries for future dates
+                schedules = Schedule.objects.filter(bus=bus)
+                for schedule in schedules:
+                    weekday_map = {
+                        'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 
+                        'Friday': 5, 'Saturday': 6, 'Sunday': 0
+                    }
+                    schedule_weekday = weekday_map.get(schedule.day, 0)
+                    
+                    for future_date in future_dates:
+                        if future_date.isoweekday() % 7 == schedule_weekday:
+                            Journey.objects.get_or_create(
+                                schedule=schedule,
+                                date=future_date,
+                                defaults={'seats': bus.capacity}
+                            )
+            
+            return JsonResponse({
+                'success': True, 
+                'message': 'Bus schedule updated successfully',
+                'stop_count': len(schedules)
+            })
+            
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)

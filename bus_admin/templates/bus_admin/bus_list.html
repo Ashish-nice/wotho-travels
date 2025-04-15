@@ -299,6 +299,41 @@
     </div>
 </div>
 
+<!-- Add this in your modal HTML section -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Edit Bus Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center mb-4" id="editScheduleModalBusInfo">
+                    <div class="bus-icon-container large me-3">
+                        <i class="fas fa-bus"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" id="editScheduleModalBusName">Bus Name</h5>
+                        <span class="text-muted" id="editScheduleModalBusNumber">Bus Number</span>
+                    </div>
+                </div>
+                
+                <div id="scheduleStopsContainer">
+                    <!-- Schedule stops will be populated here -->
+                </div>
+                
+                <button type="button" class="btn btn-outline-primary mt-3" id="addStopBtn">
+                    <i class="fas fa-plus me-1"></i> Add Stop
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveScheduleBtn">Save Schedule</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Search functionality
@@ -631,6 +666,215 @@
             `;
         }
     });
+
+// Schedule editing functionality
+let currentBusId = null;
+const editScheduleModal = new bootstrap.Modal(document.getElementById('editScheduleModal'));
+const scheduleStopsContainer = document.getElementById('scheduleStopsContainer');
+let currentSchedules = [];
+
+// Handle "Edit Schedule" button click
+document.getElementById('editScheduleBtn').addEventListener('click', function() {
+    scheduleModal.hide();
+    
+    // Fetch schedule data
+    fetch(`/bus-admin/buses/${currentBusId}/schedule/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update modal with bus info
+                document.getElementById('editScheduleModalBusName').textContent = data.bus.name;
+                document.getElementById('editScheduleModalBusNumber').textContent = data.bus.number;
+                
+                // Store schedule data
+                currentSchedules = data.schedules;
+                
+                // Render schedule inputs
+                renderScheduleInputs();
+                
+                // Show the modal
+                editScheduleModal.show();
+            } else {
+                alert(`Error fetching schedule: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching schedule:', error);
+            alert('An error occurred while fetching the schedule.');
+        });
+});
+
+// Render schedule inputs
+function renderScheduleInputs() {
+    if (currentSchedules.length === 0) {
+        // Add a blank stop if there are none
+        currentSchedules.push({
+            stopNumber: 1,
+            city: '',
+            arrivalTime: '',
+            departureTime: '',
+            day: 'Monday'
+        });
+    }
+    
+    // Build HTML for stops
+    let html = '';
+    
+    currentSchedules.forEach((stop, index) => {
+        const stopNumber = index + 1;
+        const isFirstStop = stopNumber === 1;
+        const isLastStop = stopNumber === currentSchedules.length;
+        
+        html += `
+            <div class="schedule-stop-input mb-3 p-3 border rounded" data-index="${index}">
+                <div class="d-flex justify-content-between mb-2">
+                    <h6 class="mb-0">Stop #${stopNumber}</h6>
+                    ${currentSchedules.length > 1 ? `
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-stop-btn" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    ` : ''}
+                </div>
+                
+                <div class="row g-2 mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control city-input" value="${stop.city || ''}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Day</label>
+                        <select class="form-select day-input" required>
+                            ${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                                .map(day => `<option value="${day}" ${day === stop.day ? 'selected' : ''}>${day}</option>`)
+                                .join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Arrival Time</label>
+                        <input type="time" class="form-control arrival-time-input" value="${stop.arrivalTime || ''}" ${isFirstStop ? '' : 'required'}>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Departure Time</label>
+                        <input type="time" class="form-control departure-time-input" value="${stop.departureTime || ''}" ${isLastStop ? '' : 'required'}>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    scheduleStopsContainer.innerHTML = html;
+    
+    // Add event listeners to remove buttons
+    document.querySelectorAll('.remove-stop-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const index = parseInt(this.dataset.index);
+            currentSchedules.splice(index, 1);
+            renderScheduleInputs();
+        });
+    });
+}
+
+// Add stop button
+document.getElementById('addStopBtn').addEventListener('click', function() {
+    currentSchedules.push({
+        stopNumber: currentSchedules.length + 1,
+        city: '',
+        arrivalTime: '',
+        departureTime: '',
+        day: 'Monday'
+    });
+    
+    renderScheduleInputs();
+});
+
+// Save schedule button
+document.getElementById('saveScheduleBtn').addEventListener('click', function() {
+    // Validate inputs
+    const cityInputs = document.querySelectorAll('.city-input');
+    const dayInputs = document.querySelectorAll('.day-input');
+    const arrivalTimeInputs = document.querySelectorAll('.arrival-time-input');
+    const departureTimeInputs = document.querySelectorAll('.departure-time-input');
+    
+    // Check if all required fields are filled
+    let isValid = true;
+    cityInputs.forEach(input => {
+        if (!input.value.trim() && input.required) {
+            isValid = false;
+            input.classList.add('is-invalid');
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+    
+    // Continue validation for other fields...
+    
+    if (!isValid) {
+        alert('Please fill all required fields.');
+        return;
+    }
+    
+    // Gather data from inputs
+    const updatedSchedules = [];
+    
+    for (let i = 0; i < cityInputs.length; i++) {
+        updatedSchedules.push({
+            stopNumber: i + 1,
+            city: cityInputs[i].value.trim(),
+            arrivalTime: arrivalTimeInputs[i].value,
+            departureTime: departureTimeInputs[i].value,
+            day: dayInputs[i].value
+        });
+    }
+    
+    // Send data to server
+    fetch(`/bus-admin/buses/${currentBusId}/schedule/update/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            schedules: updatedSchedules
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Schedule updated successfully!');
+            editScheduleModal.hide();
+            
+            // Update the bus card in the UI
+            const busCard = document.querySelector(`.col-lg-4[data-bus-id="${currentBusId}"]`);
+            if (busCard) {
+                busCard.querySelector('.detail-value:nth-child(2)').textContent = `${updatedSchedules.length} Stops`;
+            }
+        } else {
+            alert(`Error: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating schedule:', error);
+        alert('An error occurred while updating the schedule.');
+    });
+});
+
+// Get CSRF token
+function getCsrfToken() {
+    return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+}
+
+// When view schedule button is clicked
+document.querySelectorAll('.view-schedule').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault();
+        currentBusId = this.dataset.id;
+        // ...existing code...
+    });
+});
+
 </script>
 
 <style>

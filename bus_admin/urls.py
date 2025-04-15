@@ -1,9 +1,17 @@
 from django.urls import path
 from . import views
+from .views import (
+    BusAdminLoginView, BusAdminDashboardView, 
+    BusListView, BookingListView, AddBusView, 
+    UpdateBusView, CancelBusView, GetBusScheduleView,
+    UpdateBusScheduleView
+)
 
 urlpatterns = [
     path("login/", views.BusAdminLoginView.as_view(), name='bus_admin_login'),
     path("dashboard/", views.BusAdminDashboardView.as_view(), name='bus_admin_dashboard'),
     path("buses/", views.BusListView.as_view(), name='admin_bus_list'),
     path("bookings/", views.BookingListView.as_view(), name='admin_booking_list'),
+    path('buses/<int:bus_id>/schedule/', GetBusScheduleView.as_view(), name='get_bus_schedule'),
+    path('buses/<int:bus_id>/schedule/update/', UpdateBusScheduleView.as_view(), name='update_bus_schedule'),
 ]
