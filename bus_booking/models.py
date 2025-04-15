@@ -34,6 +34,7 @@ class City(models.Model):
 class Bus(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
+    manager = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='buses')
     number = models.CharField(max_length=50)
     capacity = models.IntegerField()
     fare = models.IntegerField(null=True,blank=True)

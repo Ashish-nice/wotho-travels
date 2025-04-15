@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .models import Bus,Booking,Ticket,City,Journey,Schedule
-from django.views.generic import ListView,DetailView,View
+from django.views.generic import ListView,DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from datetime import timedelta, datetime

@@ -1,0 +1,744 @@
+{% extends "bus_admin/base.html" %}
+{% load static %}
+
+{% block title %}Manage Buses - Bus Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="content-header d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fs-2 fw-bold">Bus Management</h1>
+        <div class="actions">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBusModal">
+                <i class="fas fa-plus me-2"></i>Add New Bus
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" id="bus-search" class="form-control border-0 bg-light" 
+                            placeholder="Search buses by name or number...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="sort-by" class="form-select border-0 bg-light">
+                        <option value="name">Sort by Name</option>
+                        <option value="number">Sort by Number</option>
+                        <option value="capacity">Sort by Capacity</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" id="apply-filters">
+                        <i class="fas fa-filter me-2"></i>Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buses Grid -->
+    <div class="row g-4 mb-4" id="buses-grid">
+        {% for bus in buses %}
+        <div class="col-lg-4 col-md-6" data-bus-id="{{ bus.id }}">
+            <div class="card bus-card h-100 border-0 shadow-sm">
+                <div class="card-header bus-card-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="bus-icon-container me-3">
+                            <i class="fas fa-bus"></i>
+                        </div>
+                        <div>
+                            <h5 class="bus-name mb-0">{{ bus.name }}</h5>
+                            <span class="bus-number text-muted">{{ bus.number }}</span>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item view-schedule" href="#" data-id="{{ bus.id }}">
+                                    <i class="fas fa-calendar-alt me-2 text-primary"></i>View Schedule
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item edit-bus" href="#" data-id="{{ bus.id }}">
+                                    <i class="fas fa-edit me-2 text-success"></i>Edit Bus
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger delete-bus" href="#" data-id="{{ bus.id }}">
+                                    <i class="fas fa-trash-alt me-2"></i>Delete Bus
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="bus-detail-item">
+                                <div class="detail-label">
+                                    <i class="fas fa-users me-1 text-primary"></i> Capacity
+                                </div>
+                                <div class="detail-value fw-medium">{{ bus.capacity }} Seats</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bus-detail-item">
+                                <div class="detail-label">
+                                    <i class="fas fa-clock me-1 text-primary"></i> Schedule
+                                </div>
+                                <div class="detail-value fw-medium">{{ bus.schedule_set.count }} Stops</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bus-detail-item">
+                                <div class="detail-label">
+                                    <i class="fas fa-money-bill-wave me-1 text-primary"></i> Base Fare
+                                </div>
+                                <div class="detail-value fw-medium">₹{{ bus.fare|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bus-detail-item">
+                                <div class="detail-label">
+                                    <i class="fas fa-ticket-alt me-1 text-primary"></i> Bookings
+                                </div>
+                                <div class="detail-value fw-medium">{{ bus.bookings.count }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light p-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button class="btn btn-sm btn-outline-primary w-100 edit-schedule-btn" data-id="{{ bus.id }}">
+                                <i class="fas fa-route me-1"></i> Routes
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-sm btn-outline-success w-100 view-bookings-btn" data-id="{{ bus.id }}">
+                                <i class="fas fa-clipboard-list me-1"></i> Bookings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state card shadow-sm border-0">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-bus fs-1 text-muted mb-3"></i>
+                    <h5>No Buses Found</h5>
+                    <p class="text-muted mb-4">You haven't added any buses to manage yet.</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBusModal">
+                        <i class="fas fa-plus me-2"></i>Add New Bus
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if buses.has_other_pages %}
+    <div class="d-flex justify-content-center">
+        <nav>
+            <ul class="pagination">
+                {% if buses.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ buses.previous_page_number }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                </li>
+                {% endif %}
+
+                {% for i in buses.paginator.page_range %}
+                    {% if buses.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }}</span>
+                    </li>
+                    {% elif i > buses.number|add:'-3' and i < buses.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if buses.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ buses.next_page_number }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add/Edit Bus Modal -->
+<div class="modal fade" id="addBusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="busModalTitle">Add New Bus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="busForm">
+                    <input type="hidden" id="busId" value="">
+                    
+                    <div class="mb-3">
+                        <label for="busName" class="form-label">Bus Name</label>
+                        <input type="text" class="form-control" id="busName" required placeholder="Enter bus name">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="busNumber" class="form-label">Bus Number</label>
+                        <input type="text" class="form-control" id="busNumber" required placeholder="Enter registration number">
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="busCapacity" class="form-label">Capacity</label>
+                            <input type="number" class="form-control" id="busCapacity" required min="1" placeholder="Seat capacity">
+                        </div>
+                        <div class="col">
+                            <label for="busBaseFare" class="form-label">Base Fare (₹)</label>
+                            <input type="number" class="form-control" id="busBaseFare" required min="0" step="0.01" placeholder="Base fare">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="busDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="busDescription" rows="3" placeholder="Enter bus description"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBusBtn">Save Bus</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Bus Schedule Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">Bus Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center mb-4" id="scheduleModalBusInfo">
+                    <div class="bus-icon-container large me-3">
+                        <i class="fas fa-bus"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1" id="scheduleModalBusName">Bus Name</h5>
+                        <span class="text-muted" id="scheduleModalBusNumber">Bus Number</span>
+                    </div>
+                </div>
+                
+                <div class="route-timeline mb-4">
+                    <div class="timeline-container" id="scheduleTimelineContainer">
+                        <!-- Schedule stops will be populated here -->
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading schedule...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editScheduleBtn">
+                    <i class="fas fa-edit me-2"></i>Edit Schedule
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this bus? This action cannot be undone and will remove all associated schedules.</p>
+                <p class="mb-0"><strong>Note:</strong> Existing bookings for this bus will still be accessible for record-keeping purposes.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete Bus</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const searchInput = document.getElementById('bus-search');
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const busCards = document.querySelectorAll('.col-lg-4, .col-md-6');
+            
+            busCards.forEach(card => {
+                const busName = card.querySelector('.bus-name').textContent.toLowerCase();
+                const busNumber = card.querySelector('.bus-number').textContent.toLowerCase();
+                
+                if (busName.includes(searchTerm) || busNumber.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // Bus Modal functionality
+        const addBusModal = new bootstrap.Modal(document.getElementById('addBusModal'));
+        const busForm = document.getElementById('busForm');
+        const busModalTitle = document.getElementById('busModalTitle');
+        
+        // Show Add Bus Modal
+        document.querySelector('.actions button').addEventListener('click', function() {
+            // Reset form
+            busForm.reset();
+            document.getElementById('busId').value = '';
+            busModalTitle.textContent = 'Add New Bus';
+        });
+        
+        // Show Edit Bus Modal
+        const editBusButtons = document.querySelectorAll('.edit-bus');
+        editBusButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const busId = this.dataset.id;
+                const busCard = document.querySelector(`.col-lg-4[data-bus-id="${busId}"]`);
+                
+                // Fill in form with bus data (in a real app, you might fetch this via AJAX)
+                document.getElementById('busId').value = busId;
+                document.getElementById('busName').value = busCard.querySelector('.bus-name').textContent.trim();
+                document.getElementById('busNumber').value = busCard.querySelector('.bus-number').textContent.trim();
+                
+                // Get capacity from detail-value (format is "XX Seats")
+                const capacityText = busCard.querySelector('.detail-value').textContent.trim();
+                document.getElementById('busCapacity').value = capacityText.split(' ')[0];
+                
+                // Get fare from the detail-value (format is "₹XXX.XX")
+                const fareText = busCard.querySelectorAll('.detail-value')[2].textContent.trim();
+                document.getElementById('busBaseFare').value = fareText.replace('₹', '');
+                
+                // Description would be fetched from the backend in a real app
+                document.getElementById('busDescription').value = 'This is a sample description for demonstration.';
+                
+                busModalTitle.textContent = 'Edit Bus';
+                addBusModal.show();
+            });
+        });
+        
+        // Save Bus (Add/Edit)
+        document.getElementById('saveBusBtn').addEventListener('click', function() {
+            if (!busForm.checkValidity()) {
+                // Trigger HTML5 validation
+                const submitEvent = new Event('submit', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                busForm.dispatchEvent(submitEvent);
+                return;
+            }
+            
+            const busId = document.getElementById('busId').value;
+            const isEditing = busId !== '';
+            
+            // In a real app, you would save via AJAX
+            alert(isEditing ? `Bus #${busId} would be updated here.` : 'A new bus would be added here.');
+            addBusModal.hide();
+            
+            // For demo purposes, let's update the UI
+            if (!isEditing) {
+                // Add a new card to the grid
+                const busesGrid = document.getElementById('buses-grid');
+                const emptyState = busesGrid.querySelector('.empty-state');
+                
+                if (emptyState) {
+                    busesGrid.innerHTML = ''; // Remove empty state
+                }
+                
+                const newBusCard = createBusCard({
+                    id: Date.now(), // Generate a temporary ID
+                    name: document.getElementById('busName').value,
+                    number: document.getElementById('busNumber').value,
+                    capacity: document.getElementById('busCapacity').value,
+                    fare: document.getElementById('busBaseFare').value
+                });
+                
+                busesGrid.insertAdjacentHTML('afterbegin', newBusCard);
+            } else {
+                // Update existing card
+                const busCard = document.querySelector(`.col-lg-4[data-bus-id="${busId}"]`);
+                busCard.querySelector('.bus-name').textContent = document.getElementById('busName').value;
+                busCard.querySelector('.bus-number').textContent = document.getElementById('busNumber').value;
+                
+                const detailValues = busCard.querySelectorAll('.detail-value');
+                detailValues[0].textContent = document.getElementById('busCapacity').value + ' Seats';
+                detailValues[2].textContent = '₹' + document.getElementById('busBaseFare').value;
+            }
+        });
+        
+        // Schedule Modal functionality
+        const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+        
+        // View Schedule
+        const viewScheduleButtons = document.querySelectorAll('.view-schedule');
+        viewScheduleButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const busId = this.dataset.id;
+                const busCard = document.querySelector(`.col-lg-4[data-bus-id="${busId}"]`);
+                
+                // Update modal header with bus info
+                document.getElementById('scheduleModalBusName').textContent = busCard.querySelector('.bus-name').textContent.trim();
+                document.getElementById('scheduleModalBusNumber').textContent = busCard.querySelector('.bus-number').textContent.trim();
+                
+                const timelineContainer = document.getElementById('scheduleTimelineContainer');
+                
+                // Show loading spinner
+                timelineContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading schedule...</p>
+                    </div>
+                `;
+                
+                scheduleModal.show();
+                
+                // Simulate API call with setTimeout
+                setTimeout(() => {
+                    // Demo schedule data
+                    const stops = [
+                        { city: 'Delhi', arrivalTime: '05:30 AM', departureTime: '06:00 AM', day: 'Monday', stopNumber: 1 },
+                        { city: 'Jaipur', arrivalTime: '11:30 AM', departureTime: '12:00 PM', day: 'Monday', stopNumber: 2 },
+                        { city: 'Ahmedabad', arrivalTime: '06:30 PM', departureTime: '07:00 PM', day: 'Monday', stopNumber: 3 },
+                        { city: 'Mumbai', arrivalTime: '04:30 AM', departureTime: '05:00 AM', day: 'Tuesday', stopNumber: 4 }
+                    ];
+                    
+                    // Build timeline HTML
+                    let timelineHTML = '<ul class="schedule-timeline">';
+                    
+                    stops.forEach((stop, index) => {
+                        const isLast = index === stops.length - 1;
+                        
+                        timelineHTML += `
+                            <li class="schedule-stop ${isLast ? 'last-stop' : ''}">
+                                <div class="stop-marker"></div>
+                                <div class="stop-content">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="stop-number">#${stop.stopNumber}</div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stop-city">${stop.city}</div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stop-time">
+                                                <small class="d-block text-muted">Arrival</small>
+                                                ${stop.arrivalTime}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="stop-time">
+                                                <small class="d-block text-muted">Departure</small>
+                                                ${stop.departureTime}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="stop-day">${stop.day}</div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    
+                    timelineHTML += '</ul>';
+                    timelineContainer.innerHTML = timelineHTML;
+                }, 1000);
+            });
+        });
+        
+        // Delete Bus functionality
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        let selectedBusId = null;
+        
+        // Show Delete Confirmation
+        const deleteBusButtons = document.querySelectorAll('.delete-bus');
+        deleteBusButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectedBusId = this.dataset.id;
+                confirmationModal.show();
+            });
+        });
+        
+        // Confirm Delete
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (selectedBusId) {
+                // In a real app, you would send an AJAX request to delete the bus
+                alert(`Bus #${selectedBusId} would be deleted here.`);
+                confirmationModal.hide();
+                
+                // For demo purposes, let's update the UI to reflect the deletion
+                const busCard = document.querySelector(`.col-lg-4[data-bus-id="${selectedBusId}"]`);
+                busCard.remove();
+                
+                // Check if there are any buses left
+                const busCards = document.querySelectorAll('.col-lg-4, .col-md-6');
+                if (busCards.length === 0) {
+                    // Show empty state
+                    const busesGrid = document.getElementById('buses-grid');
+                    busesGrid.innerHTML = `
+                        <div class="col-12">
+                            <div class="empty-state card shadow-sm border-0">
+                                <div class="card-body text-center py-5">
+                                    <i class="fas fa-bus fs-1 text-muted mb-3"></i>
+                                    <h5>No Buses Found</h5>
+                                    <p class="text-muted mb-4">You haven't added any buses to manage yet.</p>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBusModal">
+                                        <i class="fas fa-plus me-2"></i>Add New Bus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        });
+        
+        // Helper function to create a new bus card
+        function createBusCard(bus) {
+            return `
+                <div class="col-lg-4 col-md-6" data-bus-id="${bus.id}">
+                    <div class="card bus-card h-100 border-0 shadow-sm">
+                        <div class="card-header bus-card-header d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="bus-icon-container me-3">
+                                    <i class="fas fa-bus"></i>
+                                </div>
+                                <div>
+                                    <h5 class="bus-name mb-0">${bus.name}</h5>
+                                    <span class="bus-number text-muted">${bus.number}</span>
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item view-schedule" href="#" data-id="${bus.id}">
+                                            <i class="fas fa-calendar-alt me-2 text-primary"></i>View Schedule
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item edit-bus" href="#" data-id="${bus.id}">
+                                            <i class="fas fa-edit me-2 text-success"></i>Edit Bus
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item text-danger delete-bus" href="#" data-id="${bus.id}">
+                                            <i class="fas fa-trash-alt me-2"></i>Delete Bus
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="bus-detail-item">
+                                        <div class="detail-label">
+                                            <i class="fas fa-users me-1 text-primary"></i> Capacity
+                                        </div>
+                                        <div class="detail-value fw-medium">${bus.capacity} Seats</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bus-detail-item">
+                                        <div class="detail-label">
+                                            <i class="fas fa-clock me-1 text-primary"></i> Schedule
+                                        </div>
+                                        <div class="detail-value fw-medium">0 Stops</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bus-detail-item">
+                                        <div class="detail-label">
+                                            <i class="fas fa-money-bill-wave me-1 text-primary"></i> Base Fare
+                                        </div>
+                                        <div class="detail-value fw-medium">₹${bus.fare}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bus-detail-item">
+                                        <div class="detail-label">
+                                            <i class="fas fa-ticket-alt me-1 text-primary"></i> Bookings
+                                        </div>
+                                        <div class="detail-value fw-medium">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light p-3">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <button class="btn btn-sm btn-outline-primary w-100 edit-schedule-btn" data-id="${bus.id}">
+                                        <i class="fas fa-route me-1"></i> Routes
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button class="btn btn-sm btn-outline-success w-100 view-bookings-btn" data-id="${bus.id}">
+                                        <i class="fas fa-clipboard-list me-1"></i> Bookings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+</script>
+
+<style>
+    .dashboard-container {
+        padding: 1.5rem;
+    }
+    .bus-card-header {
+        background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: calc(0.375rem - 1px) calc(0.375rem - 1px) 0 0;
+    }
+    .bus-icon-container {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .bus-icon-container.large {
+        width: 60px;
+        height: 60px;
+        font-size: 1.8rem;
+    }
+    .bus-detail-item {
+        margin-bottom: 0.5rem;
+    }
+    .detail-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    .detail-value {
+        font-size: 1rem;
+    }
+    .schedule-timeline {
+        list-style: none;
+        padding-left: 0;
+        position: relative;
+    }
+    .schedule-timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 15px;
+        width: 2px;
+        background-color: #e9ecef;
+        z-index: 0;
+    }
+    .schedule-stop {
+        position: relative;
+        padding: 1rem 0 1.5rem 3rem;
+    }
+    .schedule-stop:last-child {
+        padding-bottom: 0;
+    }
+    .stop-marker {
+        position: absolute;
+        left: 0;
+        top: 1rem;
+        width: 30px;
+        height: 30px;
+        background-color: #3498db;
+        border: 5px solid #fff;
+        border-radius: 50%;
+        z-index: 1;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .last-stop .stop-marker {
+        background-color: #e74c3c;
+    }
+    .stop-content {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+    }
+    .stop-city {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    .stop-day {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .stop-number {
+        font-weight: 700;
+        color: #3498db;
+        font-size: 1.2rem;
+    }
+    .last-stop .stop-number {
+        color: #e74c3c;
+    }
+    .empty-state {
+        padding: 2rem;
+    }
+</style>
+{% endblock %}

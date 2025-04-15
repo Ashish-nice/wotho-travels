@@ -235,61 +235,17 @@
                 
                 <!-- Buses Menu -->
                 <li class="nav-item">
-                    <a href="#busSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle">
+                    <a href="{% url 'bus_list' %}" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle">
                         <i class="fas fa-bus"></i> Buses
                     </a>
-                    <ul class="collapse list-unstyled ms-4" id="busSubmenu">
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-list"></i> All Buses
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-plus"></i> Add New Bus
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-route"></i> Routes
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-calendar-alt"></i> Schedules
-                            </a>
-                        </li>
-                    </ul>
                 </li>
                 
                 <!-- Bookings Menu -->
                 <li class="nav-item">
-                    <a href="#bookingSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle">
+                    <a href="{% url 'booking_list' %}" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle">
                         <i class="fas fa-ticket-alt"></i> Bookings
                         <span class="notification-badge">5</span>
                     </a>
-                    <ul class="collapse list-unstyled ms-4" id="bookingSubmenu">
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-list"></i> All Bookings
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-file-alt"></i> New Bookings
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-check-circle"></i> Confirmed
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-ban"></i> Cancelled
-                            </a>
-                        </li>
-                    </ul>
                 </li>
                 
                 <li class="nav-item">
@@ -319,18 +275,16 @@
             <button class="toggle-sidebar" id="toggle-sidebar">
                 <i class="fas fa-bars"></i>
             </button>
-            
+            {% if request.user.groups.all %}
             <div class="user-dropdown dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="user-avatar">
                         {{ request.user.username|first|upper }}
                     </div>
-                    {% if request.user.groups.all %}
                     <div>
                         <div class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</div>
                         <small class="text-muted">Administrator</small>
                     </div>
-                    {% endif %}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     <li><a class="dropdown-item" href="#">Profile</a></li>
@@ -339,6 +293,7 @@
                     <li><a class="dropdown-item" href="#">Logout</a></li>
                 </ul>
             </div>
+            {% endif %}
         </div>
 
         <div class="content-card">
