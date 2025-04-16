@@ -59,15 +59,6 @@ class Schedule(models.Model):
     departure_time = models.TimeField()
     stop_number = models.PositiveIntegerField()
 
-    class Meta:
-        ordering = ['bus', 'day']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['bus', 'city', 'day'], 
-                name='unique_bus_city_day'
-            )
-        ]
-
     def __str__(self):
         return f"{self.bus.name} - {self.city} ({self.day})"
 

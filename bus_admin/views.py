@@ -81,7 +81,6 @@ class AddBusView(View):
             number = data.get('number')
             capacity = data.get('capacity')
             fare = data.get('fare')
-            description = data.get('description', '')
             
             if not all([name, number, capacity, fare]):
                 return JsonResponse({'success': False, 'message': 'All fields are required'}, status=400)
@@ -94,17 +93,15 @@ class AddBusView(View):
                 manager=request.user.profile
             )
             
-            return JsonResponse({
-                'success': True, 
-                'message': 'Bus added successfully',
-                'bus': {
-                    'id': new_bus.id,
-                    'name': new_bus.name,
-                    'number': new_bus.number,
-                    'capacity': new_bus.capacity,
-                    'fare': new_bus.fare
-                }
-            })
+            return JsonResponse({'success': True,
+                                  'message': 'Bus added successfully',
+                                  'bus': {
+                                    'id': new_bus.id,
+                                    'name': new_bus.name,
+                                    'number': new_bus.number,
+                                    'capacity': new_bus.capacity,
+                                    'fare': new_bus.fare
+                                }})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
@@ -120,23 +117,15 @@ class UpdateBusView(View):
             bus.capacity = int(data.get('capacity', bus.capacity))
             bus.fare = float(data.get('fare', bus.fare))
             bus.save()
-            schedules = data.get('schedules', [])
-
-            if schedules:
-                with transaction.atomic():
-                    Schedule.objects.filter(bus=bus).delete()
-                    for i, schedule in enumerate(schedules, 1):
-                        city, created = City.objects.get_or_create(name=schedule['city'])
-                        Schedule.objects.create(
-                            bus=bus,
-                            city=city,
-                            stop_number=i,
-                            arrival_time=schedule['arrivalTime'],
-                            departure_time=schedule['departureTime'],
-                            day=schedule['day']
-                        )
-            
-            return JsonResponse({'success': True, 'message': 'Bus updated successfully',})
+            return JsonResponse({'success': True,
+                                'message': 'Bus updated successfully',
+                                'bus': {
+                                    'id': bus.id,
+                                    'name': bus.name,
+                                    'number': bus.number,
+                                    'capacity': bus.capacity,
+                                    'fare': bus.fare
+                                    }})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
         
@@ -152,59 +141,25 @@ class CancelBusView(View):
                     data = {}
             else:
                 data = request.POST           
-            # Get all future bookings for this bus
+            # Getting all future bookings for this bus
             future_bookings = Booking.objects.filter(
                 bus=bus,
                 journey_date__gte=timezone.now(),
                 booking_payment=True,
-                status='BOOKED'  # Only process active bookings
+                status='BOOKED'
             )
-            
-            refund_count = 0
+            # Refunding the full amount to the user's wallet
             with transaction.atomic():
                 for booking in future_bookings:
-                    # Refund the full amount to the user's wallet
                     profile = booking.user
                     profile.user_wallet += booking.total_fare
                     profile.save()
-                    
-                    # Mark booking as cancelled
-                    booking.status = 'CANCELLED'
-                    booking.save()
-                    
-                    # Update seat availability in journeys
-                    try:
-                        from_stop = bus.schedule_set.get(city=booking.from_city).stop_number
-                        to_stop = bus.schedule_set.get(city=booking.to_city).stop_number
-                        travel_date = booking.journey_date.date()
-                        
-                        for i in range(from_stop, to_stop + 1):
-                            try:
-                                schedule = bus.schedule_set.get(stop_number=i)
-                                journey, created = Journey.objects.get_or_create(
-                                    schedule=schedule,
-                                    date=travel_date
-                                )
-                                journey.seats += booking.seats
-                                journey.save()
-                            except Schedule.DoesNotExist:
-                                continue
-                    except Exception as e:
-                        print(f"Error updating journey for booking {booking.id}: {str(e)}")
-                        continue
-                    
-                    refund_count += 1
-                
-                # Delete the bus instead of just marking it inactive
-                bus_id = bus.id
-                bus_name = bus.name
+
                 bus.delete()
-            
-            # Return success response that will work with the template's JavaScript
+                
             return JsonResponse({
                 'success': True,
-                'message': f'Bus "{bus_name}" deleted successfully. {refund_count} bookings were refunded.',
-                'refund_count': refund_count,
+                'message': f'Bus deleted successfully.',
                 'bus_id': bus_id
             })
             
@@ -243,70 +198,3 @@ class GetBusScheduleView(View):
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
-@method_decorator(group_required('bus_admin'), name='dispatch')
-class UpdateBusScheduleView(View):
-    def post(self, request, bus_id, *args, **kwargs):
-        try:
-            bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
-            data = json.loads(request.body)
-            schedules = data.get('schedules', [])
-            
-            if not schedules:
-                return JsonResponse({'success': False, 'message': 'No schedule data provided'}, status=400)   
-            with transaction.atomic():
-                Schedule.objects.filter(bus=bus).delete()
-                for i, schedule in enumerate(schedules, 1):
-                    city_name = schedule.get('city')
-                    if not city_name:
-                        continue
-                        
-                    city, created = City.objects.get_or_create(name=city_name)
-                    arrival_time = schedule.get('arrivalTime', '')
-                    departure_time = schedule.get('departureTime', '')
-                    day = schedule.get('day')
-                    
-                    if not day:
-                        continue
-                    
-                    Schedule.objects.create(
-                        bus=bus,
-                        city=city,
-                        stop_number=i,
-                        arrival_time=arrival_time if arrival_time else None,
-                        departure_time=departure_time if departure_time else None,
-                        day=day
-                    )
-
-                future_dates = []
-                today = timezone.now().date()
-                current_weekday = today.isoweekday() % 7
-
-                for i in range(30):
-                    future_date = today + timedelta(days=i)
-                    future_dates.append(future_date)
-                
-                # Create Journey entries for future dates
-                schedules = Schedule.objects.filter(bus=bus)
-                for schedule in schedules:
-                    weekday_map = {
-                        'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 
-                        'Friday': 5, 'Saturday': 6, 'Sunday': 0
-                    }
-                    schedule_weekday = weekday_map.get(schedule.day, 0)
-                    
-                    for future_date in future_dates:
-                        if future_date.isoweekday() % 7 == schedule_weekday:
-                            Journey.objects.get_or_create(
-                                schedule=schedule,
-                                date=future_date,
-                                defaults={'seats': bus.capacity}
-                            )
-            
-            return JsonResponse({
-                'success': True, 
-                'message': 'Bus schedule updated successfully',
-                'stop_count': len(schedules)
-            })
-            
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)}, status=500)
