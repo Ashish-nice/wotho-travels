@@ -121,8 +121,8 @@
                 <div class="card-footer bg-light p-3">
                     <div class="row g-2">
                         <div class="col-12">
-                            <button class="btn btn-sm btn-outline-primary w-100 edit-bus" data-id="{{ bus.id }}">
-                                <i class="fas fa-edit me-1"></i> Edit Bus
+                            <button class="btn btn-sm btn-outline-primary w-100 view-schedule" data-id="{{ bus.id }}">
+                                <i class="fas fa-calendar-alt me-1"></i> View Schedule
                             </button>
                         </div>
                     </div>
@@ -714,8 +714,8 @@
                         <div class="card-footer bg-light p-3">
                             <div class="row g-2">
                                 <div class="col-12">
-                                    <button class="btn btn-sm btn-outline-primary w-100 edit-bus" data-id="${bus.id}">
-                                        <i class="fas fa-edit me-1"></i> Edit Bus
+                                    <button class="btn btn-sm btn-outline-primary w-100 view-schedule" data-id="${bus.id}">
+                                        <i class="fas fa-calendar-alt me-1"></i> View Schedule
                                     </button>
                                 </div>
                             </div>
@@ -922,18 +922,97 @@ document.getElementById('saveScheduleBtn').addEventListener('click', function() 
 
 // Get CSRF token
 function getCsrfToken() {
-    return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    const csrfTokenElement = document.querySelector('[name="csrfmiddlewaretoken"]');
+    if (csrfTokenElement) {
+        return csrfTokenElement.value;
+    } else {
+        // If not found, look for the cookie
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                return cookie.substring('csrftoken='.length, cookie.length);
+            }
+        }
+    }
+    console.error('CSRF token not found. Form submission might fail.');
+    return '';
 }
 
-// When view schedule button is clicked
-document.querySelectorAll('.view-schedule').forEach(button => {
-    button.addEventListener('click', function(e) {
+// Add event listeners for dynamically added elements
+document.addEventListener('click', function(e) {
+    // For edit bus button
+    if (e.target.closest('.edit-bus')) {
         e.preventDefault();
-        currentBusId = this.dataset.id;
-        // ...existing code...
-    });
+        const button = e.target.closest('.edit-bus');
+        const busId = button.dataset.id;
+        const busCard = document.querySelector(`.col-lg-4[data-bus-id="${busId}"]`);
+        
+        // Fill in form with bus data
+        document.getElementById('busId').value = busId;
+        document.getElementById('busName').value = busCard.querySelector('.bus-name').textContent.trim();
+        document.getElementById('busNumber').value = busCard.querySelector('.bus-number').textContent.trim();
+        
+        // Get capacity from detail-value (format is "XX Seats")
+        const capacityText = busCard.querySelector('.detail-value').textContent.trim();
+        document.getElementById('busCapacity').value = capacityText.split(' ')[0];
+        
+        // Get fare from the detail-value (format is "₹XXX.XX")
+        const fareText = busCard.querySelectorAll('.detail-value')[2].textContent.trim();
+        document.getElementById('busBaseFare').value = fareText.replace('₹', '');
+        
+        document.getElementById('busModalTitle').textContent = 'Edit Bus';
+        const addBusModal = new bootstrap.Modal(document.getElementById('addBusModal'));
+        addBusModal.show();
+    }
+    
+    // For view schedule button
+    if (e.target.closest('.view-schedule')) {
+        e.preventDefault();
+        const button = e.target.closest('.view-schedule');
+        const busId = button.dataset.id;
+        currentBusId = busId;
+        
+        // Update modal header with bus info
+        const busCard = document.querySelector(`.col-lg-4[data-bus-id="${busId}"]`);
+        document.getElementById('scheduleModalBusName').textContent = busCard.querySelector('.bus-name').textContent.trim();
+        document.getElementById('scheduleModalBusNumber').textContent = busCard.querySelector('.bus-number').textContent.trim();
+        
+        const timelineContainer = document.getElementById('scheduleTimelineContainer');
+        
+        // Show loading spinner
+        timelineContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading schedule...</p>
+            </div>
+        `;
+        
+        const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+        scheduleModal.show();
+        
+        // Fetch schedule data
+        fetch(`/bus-admin/buses/${busId}/schedule/`)
+            .then(response => response.json())
+            .then(data => {
+                // ...existing code for handling schedule data...
+            })
+            .catch(error => {
+                // ...existing code for error handling...
+            });
+    }
+    
+    // For delete bus button
+    if (e.target.closest('.delete-bus')) {
+        e.preventDefault();
+        const button = e.target.closest('.delete-bus');
+        selectedBusId = button.dataset.id;
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        confirmationModal.show();
+    }
 });
-
 </script>
 
 <style>
