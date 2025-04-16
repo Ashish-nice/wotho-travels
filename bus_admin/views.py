@@ -77,12 +77,14 @@ class AddBusView(View):
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
+            schedule_data = data.get('schedules',[])
+
             name = data.get('name')
             number = data.get('number')
             capacity = data.get('capacity')
             fare = data.get('fare')
             
-            if not all([name, number, capacity, fare]):
+            if not all([name, number, capacity, fare, schedule_data]):
                 return JsonResponse({'success': False, 'message': 'All fields are required'}, status=400)
             
             new_bus = Bus.objects.create(
@@ -92,7 +94,17 @@ class AddBusView(View):
                 fare=float(fare),
                 manager=request.user.profile
             )
-            
+            city_obj = City.objects.get_or_create(name=schedule.get('city'))
+            for schedule in schedule_data:
+                Schedule.objects.create(
+                    bus=new_bus,
+                    city=city_obj,
+                    day=schedule.get('day'),
+                    arrival_time=schedule.get('arrivalTime'),
+                    departure_time=schedule.get('departureTime'),
+                    stop_number=schedule.get('stopNumber')
+                )
+            new_bus.save()
             return JsonResponse({'success': True,
                                   'message': 'Bus added successfully',
                                   'bus': {
