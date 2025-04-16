@@ -252,13 +252,9 @@ class UpdateBusScheduleView(View):
             schedules = data.get('schedules', [])
             
             if not schedules:
-                return JsonResponse({'success': False, 'message': 'No schedule data provided'}, status=400)
-            
+                return JsonResponse({'success': False, 'message': 'No schedule data provided'}, status=400)   
             with transaction.atomic():
-                # Delete existing schedules for this bus
                 Schedule.objects.filter(bus=bus).delete()
-                
-                # Create new schedules based on the provided data
                 for i, schedule in enumerate(schedules, 1):
                     city_name = schedule.get('city')
                     if not city_name:
@@ -280,13 +276,11 @@ class UpdateBusScheduleView(View):
                         departure_time=departure_time if departure_time else None,
                         day=day
                     )
-                
-                # Create corresponding Journey entries to initialize seat counts
+
                 future_dates = []
                 today = timezone.now().date()
-                current_weekday = today.isoweekday() % 7  # Sunday = 0, Monday = 1, etc.
-                
-                # Generate dates for the next 30 days
+                current_weekday = today.isoweekday() % 7
+
                 for i in range(30):
                     future_date = today + timedelta(days=i)
                     future_dates.append(future_date)

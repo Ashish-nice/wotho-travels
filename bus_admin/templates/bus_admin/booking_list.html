@@ -51,6 +51,9 @@
         </div>
     </div>
 
+    <!-- CSRF Token for AJAX requests -->
+    {% csrf_token %}
+
     <!-- Bookings Table -->
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
@@ -136,18 +139,10 @@
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item" href="#">
+                                            <a class="dropdown-item print-ticket" href="#" data-id="{{ booking.id }}">
                                                 <i class="fas fa-print me-2 text-success"></i>Print Ticket
                                             </a>
                                         </li>
-                                        {% if booking.status != 'CANCELLED' %}
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item text-danger cancel-booking" href="#" data-id="{{ booking.id }}">
-                                                <i class="fas fa-ban me-2"></i>Cancel Booking
-                                            </a>
-                                        </li>
-                                        {% endif %}
                                     </ul>
                                 </div>
                             </td>
@@ -176,7 +171,7 @@
             <ul class="pagination">
                 {% if bookings.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ bookings.previous_page_number }}">
+                    <a class="page-link" href="?page={{ bookings.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.payment %}&payment={{ request.GET.payment }}{% endif %}">
                         <i class="fas fa-chevron-left"></i>
                     </a>
                 </li>
@@ -193,14 +188,14 @@
                     </li>
                     {% elif i > bookings.number|add:'-3' and i < bookings.number|add:'3' %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                        <a class="page-link" href="?page={{ i }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.payment %}&payment={{ request.GET.payment }}{% endif %}">{{ i }}</a>
                     </li>
                     {% endif %}
                 {% endfor %}
 
                 {% if bookings.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ bookings.next_page_number }}">
+                    <a class="page-link" href="?page={{ bookings.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.payment %}&payment={{ request.GET.payment }}{% endif %}">
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 </li>
@@ -241,26 +236,6 @@
     </div>
 </div>
 
-<!-- Confirmation Modal -->
-<div class="modal fade" id="confirmationModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Confirm Cancellation</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to cancel this booking? This action cannot be undone and may affect the customer's experience.</p>
-                <p class="mb-0"><strong>Note:</strong> Refunds will be processed according to the cancellation policy.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">No, Keep Booking</button>
-                <button type="button" class="btn btn-danger" id="confirm-cancel">Yes, Cancel Booking</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Search functionality
@@ -279,6 +254,34 @@
             });
         });
         
+        // Refresh button functionality
+        document.getElementById('refresh-bookings').addEventListener('click', function() {
+            window.location.reload();
+        });
+        
+        // Apply filters functionality
+        document.getElementById('apply-filters').addEventListener('click', function() {
+            const status = document.getElementById('status-filter').value;
+            const paymentStatus = document.getElementById('payment-filter').value;
+            
+            // Build query string
+            let queryParams = [];
+            if (status) queryParams.push(`status=${status}`);
+            if (paymentStatus) queryParams.push(`payment=${paymentStatus}`);
+            
+            // Reload with filters
+            window.location.href = `?${queryParams.join('&')}`;
+        });
+        
+        // Set filter values from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('status')) {
+            document.getElementById('status-filter').value = urlParams.get('status');
+        }
+        if (urlParams.has('payment')) {
+            document.getElementById('payment-filter').value = urlParams.get('payment');
+        }
+        
         // View booking details
         const viewButtons = document.querySelectorAll('.view-details');
         const bookingDetailsModal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
@@ -287,12 +290,9 @@
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 const bookingId = this.dataset.id;
-                
-                // In a real application, you would fetch details via AJAX
-                // For now, we'll just show a mock-up
                 const detailsContent = document.getElementById('booking-details-content');
                 
-                // Simulate loading
+                // Show loading
                 detailsContent.innerHTML = `
                     <div class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
@@ -304,181 +304,142 @@
                 
                 bookingDetailsModal.show();
                 
-                // Simulate API call with setTimeout
-                setTimeout(() => {
-                    const row = document.querySelector(`tr[data-id="${bookingId}"]`);
-                    const busName = row.querySelector('td:nth-child(2)').textContent.trim();
-                    const customerName = row.querySelector('td:nth-child(3)').textContent.trim().split('\n')[0].trim();
-                    
+                // Get details from DOM data for the selected booking
+                const row = document.querySelector(`tr[data-id="${bookingId}"]`);
+                if (!row) {
                     detailsContent.innerHTML = `
-                        <div class="booking-detail-header mb-4 p-3 bg-light rounded">
-                            <div class="row align-items-center">
-                                <div class="col-auto">
-                                    <div class="icon-box bg-primary text-white p-3 rounded">
-                                        <i class="fas fa-ticket-alt fa-2x"></i>
-                                    </div>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Failed to find booking details
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Extract data from the row
+                const busName = row.querySelector('td:nth-child(2)').textContent.trim();
+                const customerInfo = row.querySelector('td:nth-child(3)');
+                const customerName = customerInfo.querySelector('.fw-medium').textContent.trim();
+                const customerEmail = customerInfo.querySelector('.text-muted').textContent.trim();
+                
+                const routeInfo = row.querySelector('td:nth-child(4)');
+                const fromCity = routeInfo.querySelector('.badge:nth-child(1)').textContent.replace('From:', '').trim();
+                const toCity = routeInfo.querySelector('.badge:nth-child(2)').textContent.replace('To:', '').trim();
+                
+                const dateInfo = row.querySelector('td:nth-child(5)');
+                const journeyDate = dateInfo.querySelector('span').textContent.trim();
+                const journeyTime = dateInfo.querySelector('small').textContent.trim();
+                
+                const seats = row.querySelector('td:nth-child(6)').textContent.trim();
+                const fare = row.querySelector('td:nth-child(7)').textContent.trim();
+                
+                const paymentStatus = row.querySelector('td:nth-child(8) .badge').textContent.trim();
+                const paymentBadgeClass = paymentStatus === 'Paid' ? 'bg-success' : 'bg-warning text-dark';
+                
+                const bookingStatus = row.querySelector('td:nth-child(9) .badge').textContent.trim();
+                const statusBadgeClass = 
+                    bookingStatus === 'Booked' ? 'bg-primary' :
+                    bookingStatus === 'Cancelled' ? 'bg-danger' :
+                    bookingStatus === 'Completed' ? 'bg-success' : 'bg-secondary';
+                
+                // Calculate approximate base fare and taxes (85% and 15%)
+                const totalFare = parseFloat(fare.replace('₹', '').trim());
+                const baseFare = (totalFare * 0.85).toFixed(2);
+                const taxes = (totalFare * 0.15).toFixed(2);
+                
+                // Render the booking details
+                detailsContent.innerHTML = `
+                    <div class="booking-detail-header mb-4 p-3 bg-light rounded">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="icon-box bg-primary text-white p-3 rounded">
+                                    <i class="fas fa-ticket-alt fa-2x"></i>
                                 </div>
-                                <div class="col">
-                                    <h5 class="mb-1">Booking #${bookingId}</h5>
-                                    <p class="mb-0 text-muted">Made on March 15, 2023</p>
+                            </div>
+                            <div class="col">
+                                <h5 class="mb-1">Booking #${bookingId}</h5>
+                                <p class="mb-0 text-muted">For ${journeyDate}</p>
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge ${paymentBadgeClass} px-3 py-2">${paymentStatus}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-transparent">
+                                    <h6 class="mb-0"><i class="fas fa-user-circle me-2"></i>Customer Information</h6>
                                 </div>
-                                <div class="col-auto">
-                                    <span class="badge bg-success px-3 py-2">Paid</span>
+                                <div class="card-body">
+                                    <p class="mb-1"><strong>Name:</strong> ${customerName}</p>
+                                    <p class="mb-0"><strong>Email:</strong> ${customerEmail}</p>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-header bg-transparent">
-                                        <h6 class="mb-0"><i class="fas fa-user-circle me-2"></i>Customer Information</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="mb-1"><strong>Name:</strong> ${customerName}</p>
-                                        <p class="mb-1"><strong>Email:</strong> customer@example.com</p>
-                                        <p class="mb-0"><strong>Phone:</strong> +91 9876543210</p>
-                                    </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-transparent">
+                                    <h6 class="mb-0"><i class="fas fa-bus me-2"></i>Journey Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-1"><strong>Bus:</strong> ${busName}</p>
+                                    <p class="mb-1"><strong>From:</strong> ${fromCity}</p>
+                                    <p class="mb-1"><strong>To:</strong> ${toCity}</p>
+                                    <p class="mb-0"><strong>Date:</strong> ${journeyDate} at ${journeyTime}</p>
                                 </div>
                             </div>
-                            
-                            <div class="col-md-6">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-header bg-transparent">
-                                        <h6 class="mb-0"><i class="fas fa-bus me-2"></i>Journey Details</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="mb-1"><strong>Bus:</strong> ${busName}</p>
-                                        <p class="mb-1"><strong>From:</strong> Delhi</p>
-                                        <p class="mb-1"><strong>To:</strong> Mumbai</p>
-                                        <p class="mb-0"><strong>Date:</strong> March 20, 2023 at 10:30 AM</p>
-                                    </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-transparent">
+                                    <h6 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h6>
                                 </div>
-                            </div>
-                            
-                            <div class="col-12">
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-header bg-transparent">
-                                        <h6 class="mb-0"><i class="fas fa-users me-2"></i>Passenger Information</h6>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Base Fare:</span>
+                                        <span>₹${baseFare}</span>
                                     </div>
-                                    <div class="card-body p-0">
-                                        <div class="table-responsive">
-                                            <table class="table mb-0">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>Name</th>
-                                                        <th>Age</th>
-                                                        <th>Seat Type</th>
-                                                        <th>Class</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>John Doe</td>
-                                                        <td>35</td>
-                                                        <td>Sleeper</td>
-                                                        <td>AC</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Jane Doe</td>
-                                                        <td>30</td>
-                                                        <td>Sleeper</td>
-                                                        <td>AC</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Taxes & Fees:</span>
+                                        <span>₹${taxes}</span>
                                     </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-header bg-transparent">
-                                        <h6 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Information</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Base Fare:</span>
-                                            <span>₹2,500.00</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Taxes & Fees:</span>
-                                            <span>₹450.00</span>
-                                        </div>
-                                        <hr>
-                                        <div class="d-flex justify-content-between fw-bold">
-                                            <span>Total Amount:</span>
-                                            <span>₹2,950.00</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-header bg-transparent">
-                                        <h6 class="mb-0"><i class="fas fa-hourglass-half me-2"></i>Status Timeline</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <ul class="list-unstyled timeline">
-                                            <li class="timeline-item">
-                                                <div class="timeline-marker bg-success"></div>
-                                                <div class="timeline-content">
-                                                    <h6 class="mb-0">Booking Confirmed</h6>
-                                                    <small class="text-muted">March 15, 2023 at 2:30 PM</small>
-                                                </div>
-                                            </li>
-                                            <li class="timeline-item">
-                                                <div class="timeline-marker bg-primary"></div>
-                                                <div class="timeline-content">
-                                                    <h6 class="mb-0">Payment Completed</h6>
-                                                    <small class="text-muted">March 15, 2023 at 2:35 PM</small>
-                                                </div>
-                                            </li>
-                                        </ul>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total Amount:</span>
+                                        <span>${fare}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `;
-                }, 1000);
+                        
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-transparent">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Booking Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Seats Booked:</span>
+                                        <span>${seats}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Status:</span>
+                                        <span><span class="badge ${statusBadgeClass}">${bookingStatus}</span></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Payment Status:</span>
+                                        <span><span class="badge ${paymentBadgeClass}">${paymentStatus}</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
-        });
-        
-        // Cancel booking functionality
-        const cancelButtons = document.querySelectorAll('.cancel-booking');
-        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-        let selectedBookingId = null;
-        
-        cancelButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                selectedBookingId = this.dataset.id;
-                confirmationModal.show();
-            });
-        });
-        
-        document.getElementById('confirm-cancel').addEventListener('click', function() {
-            if (selectedBookingId) {
-                // In a real application, you would send an AJAX request to cancel the booking
-                alert(`Booking #${selectedBookingId} would be cancelled here.`);
-                confirmationModal.hide();
-                
-                // For demo purposes, let's update the UI to reflect the cancellation
-                const row = document.querySelector(`tr[data-id="${selectedBookingId}"]`);
-                const statusCell = row.querySelector('td:nth-child(9)');
-                statusCell.innerHTML = '<span class="badge bg-danger">Cancelled</span>';
-                
-                // Remove the cancel option from dropdown
-                const dropdown = row.querySelector('.dropdown-menu');
-                const cancelItem = dropdown.querySelector('.cancel-booking').parentNode;
-                const divider = dropdown.querySelector('.dropdown-divider');
-                if (cancelItem && divider) {
-                    dropdown.removeChild(cancelItem);
-                    dropdown.removeChild(divider);
-                }
-            }
         });
         
         // Print functionality
