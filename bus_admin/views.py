@@ -94,7 +94,7 @@ class AddBusView(View):
                 fare=float(fare),
                 manager=request.user.profile
             )
-            city_obj = City.objects.get_or_create(name=schedule.get('city'))
+            city_obj, created = City.objects.get_or_create(name=schedule.get('city'))
             for schedule in schedule_data:
                 Schedule.objects.create(
                     bus=new_bus,
