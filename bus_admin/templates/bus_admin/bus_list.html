@@ -348,33 +348,46 @@
             const busId = document.getElementById('busId').value;
             const isEditing = busId !== '';
             
-            // Prepare bus data
-            const busData = {
-                name: document.getElementById('busName').value,
-                number: document.getElementById('busNumber').value,
-                capacity: document.getElementById('busCapacity').value,
-                fare: document.getElementById('busBaseFare').value
-            };
+            // Prepare request data based on whether we're editing or adding
+            let requestData;
             
-            // Prepare schedule data
-            const scheduleData = [];
-            const stopRows = document.querySelectorAll('.schedule-stop-row');
-            
-            stopRows.forEach((stopRow, index) => {
-                scheduleData.push({
-                    stopNumber: index + 1,
-                    city: stopRow.querySelector('.city-input').value,
-                    arrivalTime: stopRow.querySelector('.arrival-time-input').value,
-                    departureTime: stopRow.querySelector('.departure-time-input').value,
-                    day: stopRow.querySelector('.day-input').value
+            if (isEditing) {
+                // For editing, only send bus details (no schedule)
+                requestData = {
+                    name: document.getElementById('busName').value,
+                    number: document.getElementById('busNumber').value,
+                    capacity: document.getElementById('busCapacity').value,
+                    fare: document.getElementById('busBaseFare').value
+                };
+            } else {
+                // For adding a new bus, include schedule data
+                const busData = {
+                    name: document.getElementById('busName').value,
+                    number: document.getElementById('busNumber').value,
+                    capacity: document.getElementById('busCapacity').value,
+                    fare: document.getElementById('busBaseFare').value
+                };
+                
+                // Prepare schedule data
+                const scheduleData = [];
+                const stopRows = document.querySelectorAll('.schedule-stop-row');
+                
+                stopRows.forEach((stopRow, index) => {
+                    scheduleData.push({
+                        stopNumber: index + 1,
+                        city: stopRow.querySelector('.city-input').value,
+                        arrivalTime: stopRow.querySelector('.arrival-time-input').value,
+                        departureTime: stopRow.querySelector('.departure-time-input').value,
+                        day: stopRow.querySelector('.day-input').value
+                    });
                 });
-            });
-            
-            // Combine data
-            const requestData = {
-                bus: busData,
-                schedules: scheduleData
-            };
+                
+                // Combine data for new bus
+                requestData = {
+                    bus: busData,
+                    schedules: scheduleData
+                };
+            }
             
             // Determine the endpoint
             const endpoint = isEditing ? 
@@ -396,7 +409,12 @@
                 },
                 body: JSON.stringify(requestData)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // On success, update UI
@@ -432,16 +450,13 @@
                     // On failure, show error
                     alert('Error: ' + data.message);
                 }
-                
-                // Reset button state
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalBtnText;
             })
             .catch(error => {
                 console.error('Error saving bus:', error);
                 alert('An error occurred while saving the bus.');
-                
-                // Reset button state
+            })
+            .finally(() => {
+                // Reset button state regardless of success/failure
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = originalBtnText;
             });
@@ -457,22 +472,34 @@
         // Confirm Delete
         document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
             if (selectedBusId) {
+                // Show loading state
+                const deleteBtn = this;
+                const originalBtnText = deleteBtn.innerHTML;
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+                
                 // Make the delete request
                 fetch(`/bus-admin/buses/${selectedBusId}/delete/`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRFToken': getCsrfToken()
                     }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         confirmationModal.hide();
                         
                         // Remove the bus card from the UI
                         const busCard = document.querySelector(`.col-lg-4[data-bus-id="${selectedBusId}"]`);
-                        busCard.remove();
+                        if (busCard) {
+                            busCard.remove();
+                        }
                         
                         // Check if there are any buses left
                         const busCards = document.querySelectorAll('.col-lg-4, .col-md-6');
@@ -504,6 +531,11 @@
                 .catch(error => {
                     console.error('Error deleting bus:', error);
                     alert('An error occurred while deleting the bus.');
+                })
+                .finally(() => {
+                    // Reset button state regardless of success/failure
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = originalBtnText;
                 });
             }
         });
@@ -851,7 +883,6 @@
                 const busId = editBusButton.dataset.id;
                 
                 // Reset the form
-                const busForm = document.getElementById('busForm');
                 busForm.reset();
                 document.getElementById('busId').value = busId;
                 document.getElementById('busModalTitle').textContent = 'Edit Bus';
@@ -861,13 +892,17 @@
                 saveBtn.disabled = true;
                 saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
                 
-                // Clear schedule
+                // For editing, we don't need to load or modify the schedule section
                 document.getElementById('scheduleStops').innerHTML = '';
-                stopCount = 0;
                 
-                // Fetch bus details from the server
+                // Fetch just the bus details from the server
                 fetch(`/bus-admin/buses/${busId}/detail/`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             // Fill in form with bus data from server
@@ -876,27 +911,15 @@
                             document.getElementById('busCapacity').value = data.bus.capacity;
                             document.getElementById('busBaseFare').value = data.bus.fare;
                             
-                            // Load schedule if available
-                            if (data.schedules && data.schedules.length > 0) {
-                                data.schedules.forEach(stop => {
-                                    addStopRow();
-                                    const stopRow = document.querySelector(`.schedule-stop-row[data-index="${stopCount}"]`);
-                                    stopRow.querySelector('.city-input').value = stop.city;
-                                    stopRow.querySelector('.arrival-time-input').value = stop.arrivalTime || '';
-                                    stopRow.querySelector('.departure-time-input').value = stop.departureTime || '';
-                                    stopRow.querySelector('.day-input').value = stop.day;
-                                });
-                            } else {
-                                // Add one empty stop row
-                                addStopRow();
-                            }
+                            // Hide the schedule section when editing
+                            const scheduleSection = document.querySelector('#addBusModal h6.mt-4').parentNode;
+                            scheduleSection.style.display = 'none';
                             
                             // Enable the save button
                             saveBtn.disabled = false;
                             saveBtn.innerHTML = 'Save Bus';
                             
                             // Show the modal
-                            const addBusModal = new bootstrap.Modal(document.getElementById('addBusModal'));
                             addBusModal.show();
                         } else {
                             alert('Error fetching bus details: ' + data.message);
@@ -905,6 +928,9 @@
                     .catch(error => {
                         console.error('Error fetching bus details:', error);
                         alert('An error occurred while fetching bus details.');
+                    })
+                    .finally(() => {
+                        // Reset button state
                         saveBtn.disabled = false;
                         saveBtn.innerHTML = 'Save Bus';
                     });
@@ -920,9 +946,19 @@
                 confirmationModal.show();
             }
         });
-    });
 
-    // ... existing code ...
+        // Helper function to get CSRF token
+        function getCsrfToken() {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith('csrftoken=')) {
+                    return cookie.substring('csrftoken='.length, cookie.length);
+                }
+            }
+            return '';
+        }
+    });
 </script>
 
 <style>

@@ -121,64 +121,78 @@ class AddBusView(View):
 class UpdateBusView(View):
     def post(self, request, bus_id, *args, **kwargs):
         try:
+            # Find the bus with the given ID
             bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
+            
+            # Parse the request body directly, not expecting nested data anymore
             data = json.loads(request.body)
             
+            # Update the bus object with the received data
             bus.name = data.get('name', bus.name)
             bus.number = data.get('number', bus.number)
             bus.capacity = int(data.get('capacity', bus.capacity))
             bus.fare = float(data.get('fare', bus.fare))
+            
+            # Save the changes
             bus.save()
-            return JsonResponse({'success': True,
-                                'message': 'Bus updated successfully',
-                                'bus': {
-                                    'id': bus.id,
-                                    'name': bus.name,
-                                    'number': bus.number,
-                                    'capacity': bus.capacity,
-                                    'fare': bus.fare
-                                    }})
+            
+            # Return a success response with the updated bus data
+            return JsonResponse({
+                'success': True,
+                'message': 'Bus updated successfully',
+                'bus': {
+                    'id': bus.id,
+                    'name': bus.name,
+                    'number': bus.number,
+                    'capacity': bus.capacity,
+                    'fare': bus.fare
+                }
+            })
         except Exception as e:
+            # Log the error for debugging
+            print(f"Error updating bus: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
-        
+
 @method_decorator(group_required('bus_admin'), name='dispatch')
 class CancelBusView(View):
     def post(self, request, bus_id, *args, **kwargs):
         try:
+            # Find the bus with the given ID
             bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
-            if request.body:
-                try:
-                    data = json.loads(request.body)
-                except json.JSONDecodeError:
-                    data = {}
-            else:
-                data = request.POST           
-            # Getting all future bookings for this bus
+            
+            # Get all future bookings for this bus
             future_bookings = Booking.objects.filter(
                 bus=bus,
                 journey_date__gte=timezone.now(),
                 booking_payment=True,
                 status='BOOKED'
             )
-            # Refunding the full amount to the user's wallet
+            
+            # Refund the full amount to the user's wallet for each booking
             with transaction.atomic():
                 for booking in future_bookings:
                     profile = booking.user
                     profile.user_wallet += booking.total_fare
                     profile.save()
-
+                    
+                    # Mark the booking as cancelled
+                    booking.status = 'CANCELLED'
+                    booking.save()
+                
+                # Delete the bus
+                bus_id_copy = bus.id  # Save ID before deletion
                 bus.delete()
                 
-            return JsonResponse({
-                'success': True,
-                'message': f'Bus deleted successfully.',
-                'bus_id': bus_id
-            })
-            
+                # Return a success response
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Bus deleted successfully. All future bookings have been cancelled and refunded.',
+                    'bus_id': bus_id_copy
+                })
         except Exception as e:
-            # Log the exception details
-            print(f"Error cancelling bus: {str(e)}")
-            return JsonResponse({'success': False, 'message': f'Error cancelling bus: {str(e)}'}, status=500)
+            # Log the error for debugging
+            print(f"Error deleting bus: {str(e)}")
+            return JsonResponse({'success': False, 'message': f'Error deleting bus: {str(e)}'}, status=500)
 
 @method_decorator(group_required('bus_admin'), name='dispatch')
 class GetBusScheduleView(View):
