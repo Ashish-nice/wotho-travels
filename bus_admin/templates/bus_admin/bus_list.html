@@ -360,20 +360,20 @@
                     fare: document.getElementById('busBaseFare').value
                 };
             } else {
-                // For adding a new bus, include schedule data that matches the backend expectations
-                const busData = {
+                // For adding a new bus, use flattened structure to match backend expectations
+                requestData = {
                     name: document.getElementById('busName').value,
                     number: document.getElementById('busNumber').value,
                     capacity: document.getElementById('busCapacity').value,
                     fare: document.getElementById('busBaseFare').value,
                     schedules: []
                 };
+                
                 // Prepare schedule data
-                const scheduleData = [];
                 const stopRows = document.querySelectorAll('.schedule-stop-row');
                 
                 stopRows.forEach((stopRow, index) => {
-                    scheduleData.push({
+                    requestData.schedules.push({
                         stopNumber: index + 1,
                         city: stopRow.querySelector('.city-input').value,
                         arrivalTime: stopRow.querySelector('.arrival-time-input').value,
@@ -381,12 +381,6 @@
                         day: stopRow.querySelector('.day-input').value
                     });
                 });
-                
-                // Combine data for new bus
-                requestData = {
-                    bus: busData,
-                    schedules: scheduleData
-                };
             }
             
             // Determine the endpoint
