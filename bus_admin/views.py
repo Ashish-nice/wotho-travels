@@ -71,7 +71,26 @@ class BookingListView(ListView):
         queryset = super().get_queryset()
         queryset = queryset.filter()
         return Booking.objects.filter(bus__manager=self.request.user.profile)
-
+    
+@method_decorator(group_required('bus_admin'), name='dispatch')
+class GetBusDetailView(View):
+    def get(self, request, bus_id, *args, **kwargs):
+        try:
+            bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
+            
+            return JsonResponse({
+                'success': True,
+                'bus': {
+                    'id': bus.id,
+                    'name': bus.name,
+                    'number': bus.number,
+                    'capacity': bus.capacity,
+                    'fare': bus.fare
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        
 @method_decorator(group_required('bus_admin'), name='dispatch')
 class AddBusView(View):
     def post(self, request, *args, **kwargs):
@@ -223,4 +242,3 @@ class GetBusScheduleView(View):
             })
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
-
