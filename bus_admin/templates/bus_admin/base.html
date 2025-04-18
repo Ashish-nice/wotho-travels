@@ -248,19 +248,7 @@
                 </li>
                 
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-chart-line"></i> Reports
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-cog"></i> Settings
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="{% url 'logout' %}" class="nav-link">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </li>
@@ -271,9 +259,6 @@
     <!-- Main Content -->
     <div class="main-content" id="main-content">
         <div class="top-navbar">
-            <button class="toggle-sidebar" id="toggle-sidebar">
-                <i class="fas fa-bars"></i>
-            </button>
             {% if request.user.groups.all %}
             <div class="user-dropdown dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -285,12 +270,6 @@
                         <small class="text-muted">Administrator</small>
                     </div>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li><a class="dropdown-item" href="#">Account Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#">Logout</a></li>
-                </ul>
             </div>
             {% endif %}
         </div>
