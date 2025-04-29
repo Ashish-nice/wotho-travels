@@ -250,6 +250,7 @@ def export_bookings(request):
         bus = Bus.objects.get(id=request.GET.get('bus_id'))
         bookings = Booking.objects.filter(bus=bus).values('id', 'user__user__username', 'journey_date', 'total_fare', 'status', 'from_city__name', 'to_city__name', 'seats', 'total_fare')
         df = pd.DataFrame(list(bookings))
+        df['journey_date'] = df['journey_date'].dt.strftime('%Y-%m-%d')
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="bookings.xlsx"'
