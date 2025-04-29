@@ -10,5 +10,6 @@ urlpatterns = [
     path('buses/<int:bus_id>/detail/', views.GetBusDetailView.as_view(), name='get_bus_detail'),
     path('buses/add/', views.AddBusView.as_view(), name='add_bus'),
     path('buses/<int:bus_id>/update/', views.UpdateBusView.as_view(), name='update_bus'),
-    path('buses/<int:bus_id>/delete/', views.CancelBusView.as_view(), name='delete_bus'),    
+    path('buses/<int:bus_id>/delete/', views.CancelBusView.as_view(), name='delete_bus'),
+    path('export-bookings/', views.export_bookings, name='export_bookings'),
 ]

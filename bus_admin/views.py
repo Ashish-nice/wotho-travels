@@ -8,10 +8,11 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.db import transaction
-from bus_booking.models import Bus, Booking, Schedule, City, Journey
-from datetime import datetime, timedelta
+from bus_booking.models import Bus, Booking, Schedule, City
 from django.utils import timezone
 import json
+import pandas as pd
+from django.http import HttpResponse
 
 #Creating my own decorator to check if the user is authenticated and in the BusAdmin group
 def group_required(*groups):
@@ -243,3 +244,15 @@ class GetBusScheduleView(View):
             })
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+def export_bookings(request):
+    bus = get_object_or_404(Bus, id=request.POST.get('bus_id'))
+    bookings = Booking.objects.filter(bus=bus).values('id', 'user__username', 'journey_date', 'total_fare', 'status', 'from_city__name', 'to_city__name', 'seats', 'total_fare')
+    df = pd.DataFrame(list(bookings))
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="bookings.xlsx"'
+
+    df.to_excel(response, index=False, engine='openpyxl', sheet_name='Bookings')
+
+    return response

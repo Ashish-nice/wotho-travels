@@ -258,6 +258,7 @@
     {% endblock navbar %}
     <!-- Main Content -->
     <div class="main-content" id="main-content">
+        {% block topbar %}
         <div class="top-navbar">
             {% if request.user.groups.all %}
             <div class="user-dropdown dropdown">
@@ -273,6 +274,7 @@
             </div>
             {% endif %}
         </div>
+        {% endblock topbar %}
 
         <div class="content-card">
             {% block content %}{% endblock %}
