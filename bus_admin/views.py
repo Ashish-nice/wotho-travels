@@ -246,13 +246,16 @@ class GetBusScheduleView(View):
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 def export_bookings(request):
-    bus = get_object_or_404(Bus, id=request.POST.get('bus_id'))
-    bookings = Booking.objects.filter(bus=bus).values('id', 'user__username', 'journey_date', 'total_fare', 'status', 'from_city__name', 'to_city__name', 'seats', 'total_fare')
-    df = pd.DataFrame(list(bookings))
+    try:
+        bus = Bus.objects.get(id=request.GET.get('bus_id'))
+        bookings = Booking.objects.filter(bus=bus).values('id', 'user__username', 'journey_date', 'total_fare', 'status', 'from_city__name', 'to_city__name', 'seats', 'total_fare')
+        df = pd.DataFrame(list(bookings))
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="bookings.xlsx"'
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="bookings.xlsx"'
 
-    df.to_excel(response, index=False, engine='openpyxl', sheet_name='Bookings')
+        df.to_excel(response, index=False, engine='openpyxl', sheet_name='Bookings')
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
     return response
