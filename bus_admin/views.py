@@ -248,7 +248,7 @@ class GetBusScheduleView(View):
 def export_bookings(request):
     try:
         bus = Bus.objects.get(id=request.GET.get('bus_id'))
-        bookings = Booking.objects.filter(bus=bus).values('id', 'user__username', 'journey_date', 'total_fare', 'status', 'from_city__name', 'to_city__name', 'seats', 'total_fare')
+        bookings = Booking.objects.filter(bus=bus).values('id', 'user__user__username', 'journey_date', 'total_fare', 'status', 'from_city__name', 'to_city__name', 'seats', 'total_fare')
         df = pd.DataFrame(list(bookings))
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
