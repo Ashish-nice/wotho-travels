@@ -10,7 +10,7 @@ from django.utils import timezone
 import json
 import pandas as pd
 from django.http import HttpResponse
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect
 
 #Creating my own decorator to check if the user is authenticated and in the BusAdmin group
@@ -45,7 +45,16 @@ class BusAdminLoginView(LoginView):
         else:
             messages.error(self.request, 'You are not authorized to access this section.')
             return self.form_invalid(form)
-        
+
+@method_decorator(group_required('bus_admin'), name='dispatch')
+class BusAdminLogoutView(LogoutView):
+    template_name = 'bus_admin/logout.html'
+
+    def get(self, request, *args, **kwargs):
+        messages.success(request, 'Logged out successfully!')
+        return super().get(request, *args, **kwargs)
+
+
 @method_decorator(group_required('bus_admin'), name='dispatch')
 class BusAdminDashboardView(View):
     template_name = 'bus_admin/dashboard.html'
