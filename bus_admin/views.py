@@ -1,7 +1,4 @@
-from django.contrib.auth.models import Group
-from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, get_object_or_404
-from django.views.generic.edit import FormView
 from django.views import View
 from django.views.generic import ListView
 from django.contrib import messages
@@ -13,6 +10,7 @@ from django.utils import timezone
 import json
 import pandas as pd
 from django.http import HttpResponse
+from django.contrib.auth.views import LoginView
 
 #Creating my own decorator to check if the user is authenticated and in the BusAdmin group
 def group_required(*groups):
@@ -31,18 +29,21 @@ def group_required(*groups):
     return decorator
 
 # Create your views here.
-class BusAdminLoginView(FormView):
+class BusAdminLoginView(LoginView):
     template_name = 'bus_admin/login.html'
-    form_class = AuthenticationForm
-    success_url = '/bus-admin/dashboard/'  
+    redirect_authenticated_user = True
 
+    def get_success_url(self):
+            return '/bus-admin/dashboard/'
+    
     def form_valid(self, form):
         user = form.get_user()
         if user.groups.filter(name='bus_admin').exists():
+            messages.success(self.request, 'Login successful!')
             return super().form_valid(form)
         else:
             messages.error(self.request, 'You are not authorized to access this section.')
-            return render(self.request,'bus_admin/login.html', {'form': form})
+            return self.form_invalid(form)
         
 @method_decorator(group_required('bus_admin'), name='dispatch')
 class BusAdminDashboardView(View):
@@ -142,22 +143,15 @@ class AddBusView(View):
 class UpdateBusView(View):
     def post(self, request, bus_id, *args, **kwargs):
         try:
-            # Find the bus with the given ID
             bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
-            
-            # Parse the request body directly, not expecting nested data anymore
             data = json.loads(request.body)
-            
-            # Update the bus object with the received data
             bus.name = data.get('name', bus.name)
             bus.number = data.get('number', bus.number)
             bus.capacity = int(data.get('capacity', bus.capacity))
             bus.fare = float(data.get('fare', bus.fare))
-            
-            # Save the changes
+
             bus.save()
             
-            # Return a success response with the updated bus data
             return JsonResponse({
                 'success': True,
                 'message': 'Bus updated successfully',
@@ -178,10 +172,8 @@ class UpdateBusView(View):
 class CancelBusView(View):
     def post(self, request, bus_id, *args, **kwargs):
         try:
-            # Find the bus with the given ID
             bus = get_object_or_404(Bus, id=bus_id, manager=request.user.profile)
             
-            # Get all future bookings for this bus
             future_bookings = Booking.objects.filter(
                 bus=bus,
                 journey_date__gte=timezone.now(),
@@ -189,29 +181,24 @@ class CancelBusView(View):
                 status='BOOKED'
             )
             
-            # Refund the full amount to the user's wallet for each booking
             with transaction.atomic():
                 for booking in future_bookings:
                     profile = booking.user
                     profile.user_wallet += booking.total_fare
                     profile.save()
                     
-                    # Mark the booking as cancelled
                     booking.status = 'CANCELLED'
                     booking.save()
                 
-                # Delete the bus
-                bus_id_copy = bus.id  # Save ID before deletion
+                bus_id_copy = bus.id
                 bus.delete()
                 
-                # Return a success response
                 return JsonResponse({
                     'success': True,
                     'message': 'Bus deleted successfully. All future bookings have been cancelled and refunded.',
                     'bus_id': bus_id_copy
                 })
         except Exception as e:
-            # Log the error for debugging
             print(f"Error deleting bus: {str(e)}")
             return JsonResponse({'success': False, 'message': f'Error deleting bus: {str(e)}'}, status=500)
 
