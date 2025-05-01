@@ -1,0 +1,18 @@
+{% extends "bus_admin/base.html" %}
+{% block navbar %}{% endblock navbar %}
+{% block topbar %}{% endblock topbar %}
+{% load static %}
+
+{% block title %}Logout{% endblock %}
+
+{% block content %}
+<html lang="en">
+<body>
+    <div class="logout-container">
+        <h1>Successfully Logged Out</h1>
+        <p>Thank you for using Wotho Travels. You have been securely logged out.</p>
+        <a href="{% url 'login' %}" class="btn-login">Login Again</a>
+    </div>
+</body>
+</html>
+{% endblock %}

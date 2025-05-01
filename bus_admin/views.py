@@ -11,6 +11,7 @@ import json
 import pandas as pd
 from django.http import HttpResponse
 from django.contrib.auth.views import LoginView
+from django.shortcuts import redirect
 
 #Creating my own decorator to check if the user is authenticated and in the BusAdmin group
 def group_required(*groups):
@@ -21,10 +22,10 @@ def group_required(*groups):
                     return view_func(request, *args, **kwargs)
                 else:
                     messages.error(request, 'You are not authorized to access this section.')
-                    return render(request, 'bus_admin/login.html')
+                    return redirect('bus_admin_login')
             else:
                 messages.error(request, 'You need to log in first.')
-                return render(request, 'bus_admin/login.html')
+                return redirect('bus_admin_login')
         return _wrapped_view
     return decorator
 
